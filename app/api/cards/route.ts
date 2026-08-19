@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { env } from "cloudflare:workers";
 import { getDb } from "../../../db";
 import { learningCards, learningCardTags, memoryStates, reviewEvents, sourceAssets, tags, users } from "../../../db/schema";
@@ -11,11 +11,11 @@ function cleanFront(value:string){const lines=value.split("\n").map(line=>line.t
 
 export async function GET(request:Request){
   try{
-    const uid=await ensureUser(request);const db=getDb();const rows=await db.select().from(learningCards).where(eq(learningCards.userId,uid)).orderBy(asc(learningCards.createdAt));
+    const uid=await ensureUser(request);const db=getDb();const rows=await db.select().from(learningCards).where(eq(learningCards.userId,uid)).orderBy(desc(learningCards.createdAt));
     if(!rows.length)return Response.json({cards:[]});
     const links=await db.select({cardId:learningCardTags.learningCardId,name:tags.name}).from(learningCardTags).innerJoin(tags,eq(tags.id,learningCardTags.tagId)).where(inArray(learningCardTags.learningCardId,rows.map(row=>row.id)));
     const states=await db.select({cardId:memoryStates.learningCardId,lastReviewAt:memoryStates.lastReviewAt}).from(memoryStates).where(and(eq(memoryStates.userId,uid),inArray(memoryStates.learningCardId,rows.map(row=>row.id))));
-    return Response.json({cards:rows.map(row=>({id:row.id,type:row.cardType==="question"?"原题":"知识点",front:cleanFront(row.front),back:row.back,path:"AI 解析 / 待归类",tags:links.filter(link=>link.cardId===row.id).map(link=>link.name),interval:"新卡片",tone:"orange",createdAt:row.createdAt,lastReviewAt:states.find(state=>state.cardId===row.id)?.lastReviewAt||null,sourceUrl:row.sourceAssetId?`/api/assets/${row.sourceAssetId}`:null,detail:parseDetail(row.explanation)}))});
+    return Response.json({cards:rows.map(row=>{const state=states.find(item=>item.cardId===row.id);return {id:row.id,type:row.cardType==="question"?"原题":"知识点",front:cleanFront(row.front),back:row.back,path:"AI 解析 / 待归类",tags:links.filter(link=>link.cardId===row.id).map(link=>link.name),interval:state?`${state.currentIntervalDays} 天`:"新卡片",tone:"orange",createdAt:row.createdAt,lastReviewAt:state?.lastReviewAt||null,nextReviewAt:state?.nextReviewAt||null,sourceUrl:row.sourceAssetId?`/api/assets/${row.sourceAssetId}`:null,detail:parseDetail(row.explanation)}})});
   }catch(error){return Response.json({error:error instanceof Error?error.message:"读取卡片失败"},{status:500})}
 }
 
@@ -31,7 +31,7 @@ export async function POST(request:Request){
       const card={id:crypto.randomUUID(),userId:uid,cardType:"question" as const,front:String(input.front||""),back:String(input.back||""),explanation:JSON.stringify(detail),sourceAssetId,directoryId:null,status:"active" as const,archivedAt:null,createdAt:now,updatedAt:now};await db.insert(learningCards).values(card);
       const uniqueNames=[...new Map((Array.isArray(input.tags)?input.tags:[]).map((raw:unknown)=>{const name=String(raw).trim().replace(/\s+/g," ");return [normalize(name),name]}).filter(([key])=>key)).entries()];
       for(const [normalizedName,name] of uniqueNames){let [tag]=await db.select({id:tags.id,name:tags.name}).from(tags).where(and(eq(tags.userId,uid),eq(tags.normalizedName,normalizedName))).limit(1);if(!tag){const id=crypto.randomUUID();await db.insert(tags).values({id,userId:uid,name,normalizedName,createdAt:now,updatedAt:now}).onConflictDoNothing();[tag]=await db.select({id:tags.id,name:tags.name}).from(tags).where(and(eq(tags.userId,uid),eq(tags.normalizedName,normalizedName))).limit(1)}if(tag)await db.insert(learningCardTags).values({learningCardId:card.id,tagId:tag.id}).onConflictDoNothing()}
-      created.push({id:card.id,type:"原题",front:card.front,back:card.back,path:"AI 解析 / 待归类",tags:uniqueNames.map(([,name])=>name),interval:"新卡片",tone:"orange",createdAt:now,lastReviewAt:null,sourceUrl:sourceAssetId?`/api/assets/${sourceAssetId}`:null,detail});
+      created.push({id:card.id,type:"原题",front:card.front,back:card.back,path:"AI 解析 / 待归类",tags:uniqueNames.map(([,name])=>name),interval:"新卡片",tone:"orange",createdAt:now,lastReviewAt:null,nextReviewAt:null,sourceUrl:sourceAssetId?`/api/assets/${sourceAssetId}`:null,detail});
     }
     return Response.json({cards:created},{status:201});
   }catch(error){return Response.json({error:error instanceof Error?error.message:"保存卡片失败"},{status:500})}
