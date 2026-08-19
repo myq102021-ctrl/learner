@@ -80,3 +80,15 @@
 .solution-panel { background: #fbfcfb !important; }
 .solution-panel .structured-text { gap: 12px; }
 .flash-back .structured-text { margin-top: 12px; }
+.model-quick-select { display: grid; gap: 5px; min-width: 280px; padding: 10px 12px; }
+.model-quick-select > span { font-size: 9px; font-weight: 700; letter-spacing: .05em; }
+.model-quick-select select { width: 100%; border: 0; background: transparent; color: #245f5c; font: 600 11px var(--font-geist-sans), sans-serif; outline: none; cursor: pointer; }
+.model-quick-select small { color: #71918e; font-size: 8px; }
+.model-unavailable { display: grid; gap: 3px; border-color: #ecd5c9; background: #fff2eb; color: #a14e34; }
+.model-unavailable span { font-size: 8px; color: #a97564; }
+.validation-badge { border-radius: 6px; padding: 3px 6px; font-size: 8px !important; }
+.validation-badge.valid { background: #e1f0eb !important; color: #2f756a !important; }
+.validation-badge.invalid { background: #fff0e9 !important; color: #ae4f32 !important; }
+.validation-badge.pending { background: #f1f0ec !important; color: #777f80 !important; }
+.validation-error { display: block; margin-top: 4px; color: #ae4f32 !important; }
+@media (max-width: 640px) { .model-quick-select, .model-unavailable { width: 100%; min-width: 0; } }
