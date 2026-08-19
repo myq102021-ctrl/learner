@@ -1,0 +1,12 @@
+.math-text { white-space: pre-wrap; line-height: 1.85; }
+.math-inline { display: inline-block; margin: 0 .08em; }
+.math-display { display: block; overflow-x: auto; margin: 10px 0; }
+.math-display .katex-display { margin: .35em 0; }
+.rendered-field { display: block; border: 1px solid #e1e5e3; border-radius: 10px; background: #fff; padding: 14px 16px; min-height: 76px; color: #26343b; font-size: 13px; }
+.rendered-field > small { display: block; color: #7f898d; font-size: 9px; letter-spacing: .08em; margin-bottom: 10px; }
+.rendered-field.solution { min-height: 130px; }
+.rendered-options span { font-size: 12px; }
+.review-options input { border: 1px solid #e1e5e3; border-radius: 7px; padding: 9px 10px; background: #fff; }
+.review-actions { display: flex !important; gap: 14px !important; }
+.review-actions > button { border: 0; background: #edf4f2; color: #36736f; border-radius: 7px; padding: 6px 10px; font-size: 9px; }
+.flash-front .katex, .flash-back .katex { font-size: 1.05em; }
