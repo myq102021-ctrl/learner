@@ -86,6 +86,10 @@
 .solution-panel { background: #fbfcfb !important; }
 .solution-panel .structured-text { gap: 12px; }
 .flash-back .structured-text { margin-top: 12px; }
+.thinking-box p, .thinking-box li, .detail-thinking .math-text, .detail-thinking li { font-size: 13px; line-height: 1.85; color: #35464d; }
+.thinking-box strong, .detail-thinking h3 { font-size: 16px; line-height: 1.5; }
+.thinking-box ol, .detail-thinking ol { padding-left: 22px; margin-top: 12px; }
+.thinking-box li, .detail-thinking li { margin-top: 7px; padding-left: 3px; }
 .persistent-upload-workspace[hidden] { display: none !important; }
 .model-quick-select { display: grid; gap: 5px; min-width: 280px; padding: 10px 12px; }
 .model-quick-select > span { font-size: 9px; font-weight: 700; letter-spacing: .05em; }
