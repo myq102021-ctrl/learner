@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { env } from "cloudflare:workers";
 import { getDb } from "../../../db";
 import { learningCards, learningCardTags, memoryStates, reviewEvents, sourceAssets, tags, users } from "../../../db/schema";
@@ -12,10 +12,17 @@ function cleanFront(value:string){const lines=value.split("\n").map(line=>line.t
 export async function GET(request:Request){
   try{
     const uid=await ensureUser(request);const db=getDb();const rows=await db.select().from(learningCards).where(eq(learningCards.userId,uid)).orderBy(desc(learningCards.createdAt));
-    if(!rows.length)return Response.json({cards:[]});
-    const links=await db.select({cardId:learningCardTags.learningCardId,name:tags.name}).from(learningCardTags).innerJoin(tags,eq(tags.id,learningCardTags.tagId)).where(inArray(learningCardTags.learningCardId,rows.map(row=>row.id)));
-    const states=await db.select({cardId:memoryStates.learningCardId,lastReviewAt:memoryStates.lastReviewAt}).from(memoryStates).where(and(eq(memoryStates.userId,uid),inArray(memoryStates.learningCardId,rows.map(row=>row.id))));
-    return Response.json({cards:rows.map(row=>{const state=states.find(item=>item.cardId===row.id);return {id:row.id,type:row.cardType==="question"?"原题":"知识点",front:cleanFront(row.front),back:row.back,path:"AI 解析 / 待归类",tags:links.filter(link=>link.cardId===row.id).map(link=>link.name),interval:state?`${state.currentIntervalDays} 天`:"新卡片",tone:"orange",createdAt:row.createdAt,lastReviewAt:state?.lastReviewAt||null,nextReviewAt:state?.nextReviewAt||null,memoryStatus:state?.status||"new",sourceUrl:row.sourceAssetId?`/api/assets/${row.sourceAssetId}`:null,detail:parseDetail(row.explanation)}})});
+    const tagRowsPromise=db.select({id:tags.id,name:tags.name}).from(tags).where(eq(tags.userId,uid)).orderBy(asc(tags.name));
+    if(!rows.length){const tagRows=await tagRowsPromise;return Response.json({cards:[],tags:tagRows.map(tag=>({...tag,count:0}))})}
+    const cardIds=rows.map(row=>row.id);
+    const [links,states,tagRows]=await Promise.all([
+      db.select({cardId:learningCardTags.learningCardId,tagId:learningCardTags.tagId,name:tags.name}).from(learningCardTags).innerJoin(tags,eq(tags.id,learningCardTags.tagId)).where(inArray(learningCardTags.learningCardId,cardIds)),
+      db.select().from(memoryStates).where(and(eq(memoryStates.userId,uid),inArray(memoryStates.learningCardId,cardIds))),
+      tagRowsPromise,
+    ]);
+    const tagsByCard=new Map<string,string[]>();const tagCounts=new Map<string,number>();const statesByCard=new Map(states.map(state=>[state.learningCardId,state]));
+    for(const link of links){const names=tagsByCard.get(link.cardId)||[];names.push(link.name);tagsByCard.set(link.cardId,names);tagCounts.set(link.tagId,(tagCounts.get(link.tagId)||0)+1)}
+    return Response.json({cards:rows.map(row=>{const state=statesByCard.get(row.id);return {id:row.id,type:row.cardType==="question"?"原题":"知识点",front:cleanFront(row.front),back:row.back,path:"AI 解析 / 待归类",tags:tagsByCard.get(row.id)||[],interval:state?`${state.currentIntervalDays} 天`:"新卡片",tone:"orange",createdAt:row.createdAt,lastReviewAt:state?.lastReviewAt||null,nextReviewAt:state?.nextReviewAt||null,memoryStatus:state?.status||"new",sourceUrl:row.sourceAssetId?`/api/assets/${row.sourceAssetId}`:null,detail:parseDetail(row.explanation)}}),tags:tagRows.map(tag=>({...tag,count:tagCounts.get(tag.id)||0}))});
   }catch(error){return Response.json({error:error instanceof Error?error.message:"读取卡片失败"},{status:500})}
 }
 
