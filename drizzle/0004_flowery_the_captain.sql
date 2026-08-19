@@ -1,0 +1,1 @@
+CREATE INDEX `idx_cards_source_asset` ON `learning_cards` (`source_asset_id`);

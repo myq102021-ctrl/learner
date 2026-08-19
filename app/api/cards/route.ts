@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { env } from "cloudflare:workers";
 import { getDb } from "../../../db";
-import { learningCards, learningCardTags, sourceAssets, tags, users } from "../../../db/schema";
+import { learningCards, learningCardTags, memoryStates, reviewEvents, sourceAssets, tags, users } from "../../../db/schema";
 
 function identity(request:Request){return {id:request.headers.get("oai-authenticated-user-id")||"local-user",email:request.headers.get("oai-authenticated-user-email")||"local@learner.app"}}
 function normalize(value:string){return value.trim().replace(/\s+/g," ").toLocaleLowerCase()}
@@ -34,4 +34,13 @@ export async function POST(request:Request){
     }
     return Response.json({cards:created},{status:201});
   }catch(error){return Response.json({error:error instanceof Error?error.message:"保存卡片失败"},{status:500})}
+}
+
+export async function DELETE(request:Request){
+  try{
+    const uid=await ensureUser(request);const id=new URL(request.url).searchParams.get("id");if(!id)return Response.json({error:"缺少卡片 id"},{status:400});const db=getDb();const [card]=await db.select({id:learningCards.id,sourceAssetId:learningCards.sourceAssetId}).from(learningCards).where(and(eq(learningCards.id,id),eq(learningCards.userId,uid))).limit(1);if(!card)return Response.json({error:"卡片不存在"},{status:404});
+    await db.delete(reviewEvents).where(and(eq(reviewEvents.learningCardId,id),eq(reviewEvents.userId,uid)));await db.delete(memoryStates).where(and(eq(memoryStates.learningCardId,id),eq(memoryStates.userId,uid)));await db.delete(learningCardTags).where(eq(learningCardTags.learningCardId,id));await db.delete(learningCards).where(and(eq(learningCards.id,id),eq(learningCards.userId,uid)));
+    let sourceDeleted=false;if(card.sourceAssetId){const [remaining]=await db.select({id:learningCards.id}).from(learningCards).where(eq(learningCards.sourceAssetId,card.sourceAssetId)).limit(1);if(!remaining){const [asset]=await db.select().from(sourceAssets).where(and(eq(sourceAssets.id,card.sourceAssetId),eq(sourceAssets.userId,uid))).limit(1);if(asset){await env.UPLOADS.delete(asset.storageKey);await db.delete(sourceAssets).where(and(eq(sourceAssets.id,asset.id),eq(sourceAssets.userId,uid)));sourceDeleted=true}}}
+    return Response.json({ok:true,sourceDeleted});
+  }catch(error){return Response.json({error:error instanceof Error?error.message:"删除卡片失败"},{status:500})}
 }
