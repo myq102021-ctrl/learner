@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type View = "home" | "upload" | "cards" | "study" | "stats";
+type View = "home" | "upload" | "cards" | "study" | "stats" | "settings";
 type Rating = "again" | "hard" | "good" | "easy";
+type ModelConfig = { id:string; provider:string; providerLabel:string; model:string; apiKey:string; baseUrl:string; enabled:boolean; isDefault:boolean };
 
 const cards = [
   { id: 1, type: "思维模型", front: "看到“已知 GCD 和 LCM 求两个整数”，第一步想到什么？", back: "设 a = gcd × x，b = gcd × y，且 gcd(x,y)=1，再结合 a×b = gcd×lcm。", path: "199 管综 / 数学 / 算术", tags: ["错题", "必背"], interval: "今天", tone: "violet" },
@@ -13,7 +14,7 @@ const cards = [
 ];
 
 const nav = [
-  ["home", "首页", "◈"], ["upload", "上传学习内容", "↑"], ["cards", "学习卡片", "▱"], ["stats", "学习统计", "⌑"],
+  ["home", "首页", "◈"], ["upload", "上传学习内容", "↑"], ["cards", "学习卡片", "▱"], ["stats", "学习统计", "⌑"], ["settings", "设置", "⚙"],
 ] as const;
 
 export default function Home() {
@@ -24,6 +25,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [uploadMode, setUploadMode] = useState<"memorization" | "question" | null>(null);
   const [notice, setNotice] = useState("");
+  const [modelConfigs,setModelConfigs]=useState<ModelConfig[]>([]);
   const dueCards = cards.slice(0, 2);
   const activeCard = dueCards[studyIndex % dueCards.length];
   const filtered = useMemo(() => cards.filter(c => `${c.front}${c.tags.join("")}${c.path}`.toLowerCase().includes(query.toLowerCase())), [query]);
@@ -52,6 +54,7 @@ export default function Home() {
         {view === "upload" && <Upload mode={uploadMode} setMode={setUploadMode} />}
         {view === "study" && <Study card={activeCard} revealed={revealed} setRevealed={setRevealed} rate={rate} current={studyIndex+1} notice={notice} onExit={() => setView("home")} />}
         {view === "stats" && <Stats />}
+        {view === "settings" && <Settings configs={modelConfigs} setConfigs={setModelConfigs} />}
       </section>
     </main>
   );
@@ -83,3 +86,19 @@ function Upload({mode,setMode}:{mode:"memorization"|"question"|null;setMode:(m:"
 function Study({card,revealed,setRevealed,rate,current,notice,onExit}:{card:(typeof cards)[0];revealed:boolean;setRevealed:(v:boolean)=>void;rate:(r:Rating)=>void;current:number;notice:string;onExit:()=>void}) { return <div className="study-page"><header><button onClick={onExit}>×</button><div><span>今日学习</span><progress value={current} max="36"/><b>{current} / 36</b></div><button>···</button></header><div className="study-stage"><div className={`flashcard ${revealed?"revealed":""}`}><div className="flash-meta"><span>{card.type}</span><small>{card.path}</small></div><div className="flash-front"><small>问题</small><h2>{card.front}</h2></div>{revealed&&<div className="flash-back"><small>答案与解题模型</small><p>{card.back}</p></div>}<div className="flash-tags">{card.tags.map(t=><span key={t}>#{t}</span>)}</div></div>{!revealed?<button className="reveal" onClick={()=>setRevealed(true)}>查看答案 <kbd>Space</kbd></button>:<div className="ratings"><p>这次回忆得怎么样？</p><div><button onClick={()=>rate("again")}><b>Again</b><span>完全忘记</span><kbd>1</kbd></button><button onClick={()=>rate("hard")}><b>Hard</b><span>比较困难</span><kbd>2</kbd></button><button onClick={()=>rate("good")}><b>Good</b><span>正常想起</span><kbd>3</kbd></button><button onClick={()=>rate("easy")}><b>Easy</b><span>非常熟练</span><kbd>4</kbd></button></div></div>}{notice&&<div className="toast">{notice}</div>}</div></div> }
 
 function Stats(){ return <div className="page"><div className="page-heading"><div><span className="eyebrow">记忆趋势</span><h1>学习统计</h1><p>看见每一次回忆如何让知识更牢固。</p></div></div><div className="stat-grid"><article><small>近 30 天复习</small><strong>684</strong><em>↑ 18%</em></article><article><small>平均记忆率</small><strong>87%</strong><em>稳定</em></article><article><small>已掌握</small><strong>426</strong><em>34% 卡片</em></article></div><section className="chart"><h3>近 14 天学习量</h3><div className="bars">{[34,52,41,65,48,72,28,56,82,61,76,90,68,84].map((n,i)=><i key={i} style={{height:`${n}%`}}><span>{n}</span></i>)}</div><div className="chart-labels"><span>8/06</span><span>8/12</span><span>今天</span></div></section></div> }
+
+const providers = {
+  openai:{label:"OpenAI",baseUrl:"https://api.openai.com/v1",models:["gpt-5.4","gpt-5.4-mini","gpt-4.1"]},
+  anthropic:{label:"Anthropic",baseUrl:"https://api.anthropic.com/v1",models:["claude-sonnet-4-5","claude-opus-4-1"]},
+  gemini:{label:"Google Gemini",baseUrl:"https://generativelanguage.googleapis.com/v1beta",models:["gemini-2.5-pro","gemini-2.5-flash"]},
+  deepseek:{label:"DeepSeek",baseUrl:"https://api.deepseek.com/v1",models:["deepseek-chat","deepseek-reasoner"]},
+  custom:{label:"自定义兼容接口",baseUrl:"",models:[] as string[]},
+};
+
+function Settings({configs,setConfigs}:{configs:ModelConfig[];setConfigs:(next:ModelConfig[])=>void}){
+  const [adding,setAdding]=useState(false);const [provider,setProvider]=useState<keyof typeof providers>("openai");const [model,setModel]=useState(providers.openai.models[0]);const [customModel,setCustomModel]=useState("");const [key,setKey]=useState("");const [baseUrl,setBaseUrl]=useState(providers.openai.baseUrl);const [showKey,setShowKey]=useState(false);
+  function chooseProvider(value:keyof typeof providers){setProvider(value);setModel(providers[value].models[0]||"");setBaseUrl(providers[value].baseUrl);setCustomModel("")}
+  function add(){const finalModel=provider==="custom"?customModel:model;if(!key.trim()||!finalModel.trim())return;const next:ModelConfig={id:crypto.randomUUID(),provider,providerLabel:providers[provider].label,model:finalModel,apiKey:key.trim(),baseUrl:baseUrl.trim(),enabled:true,isDefault:configs.length===0};setConfigs([...configs,next]);setKey("");setAdding(false)}
+  function update(id:string,change:Partial<ModelConfig>){setConfigs(configs.map(c=>c.id===id?{...c,...change}:change.isDefault?{...c,isDefault:false}:c))}
+  return <div className="page settings-page"><div className="page-heading"><div><span className="eyebrow">系统设置</span><h1>模型管理</h1><p>管理 AI 解析使用的厂商、模型和 API Key。</p></div><button className="primary" onClick={()=>setAdding(true)}>+ 添加模型</button></div><div className="security-note"><span>✦</span><div><strong>密钥安全</strong><p>API Key 不会在列表中显示。当前版本仅在本次页面会话中保留，关闭页面后自动清除。</p></div></div>{configs.length===0?<div className="empty-models"><div>⌘</div><h2>还没有可用的 AI 模型</h2><p>添加一个厂商和 API Key，才能开始图片识题与解析。</p><button onClick={()=>setAdding(true)}>+ 添加第一个模型</button></div>:<div className="model-list">{configs.map(config=><article key={config.id}><div className={`provider-logo ${config.provider}`}>{config.providerLabel.slice(0,2)}</div><div className="model-main"><div><h3>{config.providerLabel}</h3>{config.isDefault&&<span>默认解析模型</span>}</div><strong>{config.model}</strong><small>{config.baseUrl} · Key ••••{config.apiKey.slice(-4)}</small></div><label className="switch"><input type="checkbox" checked={config.enabled} onChange={e=>update(config.id,{enabled:e.target.checked})}/><i></i></label><button className="model-action" onClick={()=>update(config.id,{isDefault:true})}>{config.isDefault?"已默认":"设为默认"}</button><button className="delete-model" onClick={()=>setConfigs(configs.filter(c=>c.id!==config.id))}>删除</button></article>)}</div>}{adding&&<div className="modal-backdrop" onMouseDown={()=>setAdding(false)}><section className="model-modal" onMouseDown={e=>e.stopPropagation()}><header><div><span className="eyebrow">新建连接</span><h2>添加 AI 模型</h2></div><button onClick={()=>setAdding(false)}>×</button></header><label>模型厂商<select value={provider} onChange={e=>chooseProvider(e.target.value as keyof typeof providers)}>{Object.entries(providers).map(([id,p])=><option key={id} value={id}>{p.label}</option>)}</select></label><label>选择模型{provider==="custom"?<input value={customModel} onChange={e=>setCustomModel(e.target.value)} placeholder="例如 my-vision-model"/>:<select value={model} onChange={e=>setModel(e.target.value)}>{providers[provider].models.map(m=><option key={m}>{m}</option>)}</select>}</label><label>API 地址<input value={baseUrl} onChange={e=>setBaseUrl(e.target.value)} placeholder="https://api.example.com/v1"/></label><label>API Key<div className="key-input"><input type={showKey?"text":"password"} value={key} onChange={e=>setKey(e.target.value)} autoComplete="off" placeholder="在此粘贴 API Key"/><button onClick={()=>setShowKey(v=>!v)}>{showKey?"隐藏":"显示"}</button></div><small>请勿在聊天、文档或截图中分享密钥。</small></label><footer><button onClick={()=>setAdding(false)}>取消</button><button className="primary" disabled={!key.trim()||!(provider==="custom"?customModel:model)} onClick={add}>添加模型</button></footer></section></div>}</div>
+}
