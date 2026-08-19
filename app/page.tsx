@@ -9,7 +9,7 @@ type Rating = "again" | "hard" | "good" | "easy";
 type ModelConfig = { id:string; provider:string; providerLabel:string; model:string; apiKey?:string; keyLast4?:string; baseUrl:string; enabled:boolean; isDefault:boolean; validationStatus:"pending"|"valid"|"invalid"; validationError?:string|null; lastValidatedAt?:string|null };
 type ModelChoice = ModelConfig & { choiceId:string };
 type GoogleModel = { id:string; name:string; description:string; inputTokenLimit:number|null; outputTokenLimit:number|null };
-type Card = { id:number|string; type:string; front:string; back:string; path:string; tags:string[]; interval:string; tone:string; createdAt?:string|Date|null; lastReviewAt?:string|Date|null; nextReviewAt?:string|Date|null; sourceUrl?:string|null; detail?:{stem:string;options:string[];answer:string;solution:string;thinkingModel:{name:string;description:string;steps:string[]}|null}|null };
+type Card = { id:number|string; type:string; front:string; back:string; path:string; tags:string[]; interval:string; tone:string; createdAt?:string|Date|null; lastReviewAt?:string|Date|null; nextReviewAt?:string|Date|null; memoryStatus?:string; sourceUrl?:string|null; detail?:{stem:string;options:string[];answer:string;solution:string;thinkingModel:{name:string;description:string;steps:string[]}|null}|null };
 type AnalyzedQuestion = { order:number; questionNumber:string; stem:string; options:string[]; answer:string; solution:string; knowledgePoints:{name:string;summary:string}[]; thinkingModel:{name:string;description:string;steps:string[]}; difficulty:number; confirmed?:boolean; tags?:string[] };
 type Tag = { id:string; name:string };
 type StatsData = {totalCards:number;dueCount:number;newToday:number;completedToday:number;streak:number;recent30:number;retention:number;mastered:number;masteredRate:number;trend:{date:string;label:string;count:number}[]};
@@ -36,6 +36,7 @@ const nav = [
 export default function Home() {
   const [view, setView] = useState<View>("home");
   const [studyIndex, setStudyIndex] = useState(0);
+  const [studyQueue,setStudyQueue]=useState<Array<string|number>>([]);
   const [revealed, setRevealed] = useState(false);
   const [query, setQuery] = useState("");
   const [uploadMode, setUploadMode] = useState<"memorization" | "question" | null>(null);
@@ -47,8 +48,8 @@ export default function Home() {
   const [statsData,setStatsData]=useState<StatsData>(emptyStats);
   const [selectedCard,setSelectedCard]=useState<Card|null>(null);
   const allCards=generatedCards;
-  const dueCards = allCards.filter(card=>!card.nextReviewAt||new Date(card.nextReviewAt)<=new Date());
-  const activeCard = dueCards.length?dueCards[studyIndex % dueCards.length]:undefined;
+  const dueCards = allCards.filter(card=>card.memoryStatus!=="mastered"&&(!card.nextReviewAt||new Date(card.nextReviewAt)<=new Date()));
+  const activeCard = studyQueue.length?allCards.find(card=>card.id===studyQueue[studyIndex]):undefined;
   const filtered = useMemo(() => allCards.filter(c => `${c.front}${c.tags.join("")}${c.path}`.toLowerCase().includes(query.toLowerCase())), [query,allCards]);
   const activeModel=modelChoices.find(c=>c.choiceId===selectedModelId)||modelChoices.find(c=>c.isDefault&&c.model===modelConfigs.find(config=>config.id===c.id)?.model)||modelChoices[0];
 
@@ -57,9 +58,10 @@ export default function Home() {
   useEffect(()=>{let cancelled=false;fetch("/api/cards").then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.error||"读取卡片失败");if(!cancelled)setGeneratedCards(data.cards||[])}).catch(()=>{});return()=>{cancelled=true}},[]);
   useEffect(()=>{let cancelled=false;fetch("/api/stats").then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.error||"读取统计失败");if(!cancelled)setStatsData(data)}).catch(()=>{});return()=>{cancelled=true}},[]);
 
+  async function startStudy(){setNotice("");try{const response=await fetch("/api/cards");const data=await response.json();if(!response.ok)throw new Error(data.error||"读取到期卡片失败");const fresh:Card[]=data.cards||[];const due=fresh.filter(card=>card.memoryStatus!=="mastered"&&(!card.nextReviewAt||new Date(card.nextReviewAt)<=new Date()));setGeneratedCards(fresh);setStudyQueue(due.map(card=>card.id));setStudyIndex(0);setRevealed(false);setView("study")}catch(error){setNotice(error instanceof Error?error.message:"读取到期卡片失败")}}
+
   async function rate(rating: Rating) {
-    const label = { again: "重新学习", hard: "稍后巩固", good: "4 天后复习", easy: "15 天后复习" }[rating];
-    if(!activeCard)return;try{const response=await fetch("/api/reviews",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({cardId:activeCard.id,rating})});const data=await response.json();if(!response.ok)throw new Error(data.error||"保存学习记录失败");setGeneratedCards(cards=>cards.map(card=>card.id===activeCard.id?{...card,lastReviewAt:data.lastReviewAt,nextReviewAt:data.nextReviewAt}:card));const statsResponse=await fetch("/api/stats");if(statsResponse.ok)setStatsData(await statsResponse.json());setNotice(`已记录·${label}`);setTimeout(() => { setStudyIndex(0); setRevealed(false); setNotice(""); }, 650)}catch(error){setNotice(error instanceof Error?error.message:"保存学习记录失败")}
+    if(!activeCard)return;try{const response=await fetch("/api/reviews",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({cardId:activeCard.id,rating})});const data=await response.json();if(!response.ok)throw new Error(data.error||"保存学习记录失败");setGeneratedCards(cards=>cards.map(card=>card.id===activeCard.id?{...card,lastReviewAt:data.lastReviewAt,nextReviewAt:data.nextReviewAt,memoryStatus:data.status,interval:`${data.intervalDays} 天`}:card));const statsResponse=await fetch("/api/stats");if(statsResponse.ok)setStatsData(await statsResponse.json());setNotice(`已记录 · ${data.intervalDays} 天后复习`);setTimeout(() => { setStudyIndex(index=>index+1); setRevealed(false); setNotice(""); }, 650)}catch(error){setNotice(error instanceof Error?error.message:"保存学习记录失败")}
   }
 
   return (
@@ -67,18 +69,18 @@ export default function Home() {
       <aside className="sidebar">
         <button className="brand" onClick={() => setView("home")}><span className="brand-mark">L</span><span>Learner<small>个人学习机</small></span></button>
         <nav>{nav.map(([id, label, icon]) => <button key={id} className={view === id||(id==="cards"&&view==="cardDetail") ? "active" : ""} onClick={() => setView(id as View)}><i>{icon}</i>{label}{id === "cards" && <b>{allCards.length}</b>}</button>)}</nav>
-        <div className="sidebar-card"><span>本周连续学习</span><strong>6 <small>天</small></strong><div className="week">{["M","T","W","T","F","S","S"].map((d,i)=><i className={i<6?"done":""} key={i}>{i<6?"✓":d}</i>)}</div></div>
+        <div className="sidebar-card"><span>连续学习</span><strong>{statsData.streak} <small>天</small></strong><div className="week">{statsData.trend.slice(-7).map(item=><i className={item.count?"done":""} key={item.date}>{item.count?"✓":item.label.split("/")[1]}</i>)}</div></div>
         <button className="profile"><span>林</span><span>林晓宇<small>学习设置</small></span><i>···</i></button>
       </aside>
 
       <section className="workspace">
         <header className="topbar"><div className="mobile-logo">Learner</div><button className="search" onClick={() => setView("cards")}><span>⌕</span>搜索卡片、标签或目录 <kbd>⌘ K</kbd></button><div className="top-actions"><button>○</button><button>♧</button><span className="avatar">林</span></div></header>
 
-        {view === "home" && <Dashboard onStudy={() => setView("study")} onUpload={() => setView("upload")} onCards={() => setView("cards")} stats={statsData} cards={allCards} />}
-        {view === "cards" && <CardLibrary cards={filtered} query={query} setQuery={setQuery} onStudy={() => setView("study")} onOpenDetail={card=>{setSelectedCard(card);setView("cardDetail")}} />}
+        {view === "home" && <Dashboard onStudy={()=>void startStudy()} onUpload={() => setView("upload")} onCards={() => setView("cards")} stats={statsData} cards={allCards} />}
+        {view === "cards" && <CardLibrary cards={filtered} query={query} setQuery={setQuery} dueCount={statsData.dueCount} onStudy={()=>void startStudy()} onOpenDetail={card=>{setSelectedCard(card);setView("cardDetail")}} />}
         {view === "cardDetail" && selectedCard && <CardDetail card={selectedCard} onClose={()=>setView("cards")} onDeleted={()=>{setGeneratedCards(items=>items.filter(card=>card.id!==selectedCard.id));setSelectedCard(null);setView("cards")}}/>}
         <div className="persistent-upload-workspace" hidden={view!=="upload"}><AIUpload active={view==="upload"} mode={uploadMode} setMode={setUploadMode} model={activeModel} models={modelChoices} onModelChange={setSelectedModelId} onCardsGenerated={newCards=>{setGeneratedCards(prev=>[...newCards,...prev]);setView("cards")}} /></div>
-        {view === "study" && <Study card={activeCard} revealed={revealed} setRevealed={setRevealed} rate={rate} current={studyIndex+1} total={dueCards.length} notice={notice} onExit={() => setView("home")} />}
+        {view === "study" && <Study card={activeCard} revealed={revealed} setRevealed={setRevealed} rate={rate} current={Math.min(studyIndex+1,studyQueue.length)} total={studyQueue.length} notice={notice} onExit={() => setView("home")} />}
         {view === "stats" && <Stats stats={statsData} />}
         {view === "settings" && <Settings configs={modelConfigs} setConfigs={setModelConfigs} />}
       </section>
@@ -97,7 +99,7 @@ function Dashboard({onStudy,onUpload,onCards,stats,cards}:{onStudy:()=>void;onUp
   </div>;
 }
 
-function CardLibrary({cards:items,query,setQuery,onStudy,onOpenDetail}:{cards:Card[];query:string;setQuery:(v:string)=>void;onStudy:()=>void;onOpenDetail:(card:Card)=>void}) {
+function CardLibrary({cards:items,query,setQuery,dueCount,onStudy,onOpenDetail}:{cards:Card[];query:string;setQuery:(v:string)=>void;dueCount:number;onStudy:()=>void;onOpenDetail:(card:Card)=>void}) {
   const [allTags,setAllTags]=useState<Tag[]>([]);const [tagQuery,setTagQuery]=useState("");const [selectedTags,setSelectedTags]=useState<string[]>([]);
   useEffect(()=>{let cancelled=false;fetch("/api/tags").then(async response=>{const data=await response.json();if(response.ok&&!cancelled)setAllTags(data.tags||[])}).catch(()=>{});return()=>{cancelled=true}},[]);
   const visibleTags=allTags.filter(tag=>tag.name.toLocaleLowerCase().includes(tagQuery.trim().toLocaleLowerCase()));const shown=selectedTags.length?items.filter(card=>selectedTags.every(selectedTag=>card.tags.some(tag=>tag.toLocaleLowerCase()===selectedTag.toLocaleLowerCase()))):items;
