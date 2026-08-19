@@ -6,6 +6,9 @@
 .rendered-field > small { display: block; color: #7f898d; font-size: 9px; letter-spacing: .08em; margin-bottom: 10px; }
 .rendered-field.solution { min-height: 130px; }
 .rendered-options span { font-size: 12px; }
+.rendered-options span.correct-option { position: relative; background: #dcece8; color: #225f5a; border: 1px solid #82aaa4; box-shadow: inset 3px 0 #327b74; font-weight: 700; }
+.rendered-options span.correct-option > b { float: right; border-radius: 5px; background: #2f7770; color: white; padding: 2px 6px; font-size: 8px; font-weight: 650; }
+.full-solution { width: 100%; margin-top: 4px; }
 .review-options input { border: 1px solid #e1e5e3; border-radius: 7px; padding: 9px 10px; background: #fff; }
 .review-actions { display: flex !important; gap: 14px !important; }
 .review-actions > button { border: 0; background: #edf4f2; color: #36736f; border-radius: 7px; padding: 6px 10px; font-size: 9px; }
