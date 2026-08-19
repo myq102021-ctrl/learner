@@ -46,3 +46,23 @@
 .detail-thinking h3 { margin: 0 0 8px; font: 16px Georgia, "Songti SC", serif; }
 .detail-thinking li { margin-top: 5px; }
 @media (max-width: 760px) { .card-detail-grid { grid-template-columns: 1fr; } .card-detail { padding: 18px; } .card-detail-grid > aside img { max-height: 320px; } }
+.library-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 18px; align-items: start; }
+.tag-sidebar { position: sticky; top: 88px; border: 1px solid #e2e6e4; border-radius: 14px; background: white; padding: 14px; }
+.tag-sidebar > header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.tag-sidebar > header strong { font: 16px Georgia, "Songti SC", serif; }
+.tag-sidebar > header button { border: 0; background: none; color: #4c7b77; font-size: 9px; }
+.tag-sidebar > input { width: 100%; border: 1px solid #e0e5e2; border-radius: 8px; padding: 9px 10px; font-size: 10px; outline: none; }
+.tag-sidebar > input:focus { border-color: #5d8d88; }
+.tag-sidebar nav { display: grid; gap: 4px; margin-top: 10px; max-height: calc(100vh - 245px); overflow: auto; }
+.tag-sidebar nav button { display: flex; justify-content: space-between; align-items: center; gap: 8px; border: 0; border-radius: 8px; background: transparent; color: #5f6c71; padding: 9px 10px; text-align: left; font-size: 10px; }
+.tag-sidebar nav button:hover { background: #f2f6f4; }
+.tag-sidebar nav button.active { background: #dfeeea; color: #266964; font-weight: 700; }
+.tag-sidebar nav button b { min-width: 22px; border-radius: 10px; background: #eef0ed; padding: 2px 6px; color: #778186; text-align: center; font-size: 8px; }
+.filtered-cards { min-width: 0; }
+.active-tag-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.active-tag-filters small { color: #7b8589; margin-right: 3px; }
+.active-tag-filters button { border: 0; border-radius: 7px; background: #deeeeb; color: #2e706b; padding: 6px 9px; font-size: 9px; }
+.empty-card-results { border: 1px dashed #cad5d2; border-radius: 15px; background: #f7f9f7; padding: 48px 24px; text-align: center; color: #647277; }
+.empty-card-results strong { display: block; color: #26373e; font: 18px Georgia, "Songti SC", serif; }
+.empty-card-results p { margin: 8px 0 18px; font-size: 11px; }
+@media (max-width: 760px) { .library-layout { grid-template-columns: 1fr; } .tag-sidebar { position: static; } .tag-sidebar nav { display: flex; overflow-x: auto; max-height: none; } .tag-sidebar nav button { flex: 0 0 auto; } }
