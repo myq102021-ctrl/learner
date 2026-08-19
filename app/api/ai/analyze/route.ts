@@ -5,11 +5,12 @@ const schema = {
 const prompt=`你是 Learner 个人学习机的题目分析引擎。仔细阅读用户提供的图片，首先判断图片中包含多少道独立题目，然后逐题输出。
 必须遵循：
 1. 保持原题题干和选项，不要随意改写。
-2. 每道题独立解答，给出明确答案和可以学习的详细解析。
+2. 每道题独立解答。answer 字段只写最终答案，不要把推导过程塞进 answer。
 3. 知识点名称要简短、稳定。
 4. 思维模型不是重复解析，而是回答“下次看到类似题目，应该如何识别并想到这个方法”。
 5. 如果图片模糊，在相应字段中明确标记不确定，不要编造。
-6. 所有内容使用中文，除非原题为其他语言。`;
+6. solution 必须分层输出，每个部分单独换行，固定使用“思路：”、“步骤 1：”、“步骤 2：”……、“结论：”的结构。每步只表达一个关键推理，避免冗长重复和自我否定式的过程。
+7. 所有内容使用中文，除非原题为其他语言。`;
 
 function outputText(data:any){if(typeof data.output_text==="string")return data.output_text;for(const item of data.output||[])for(const c of item.content||[])if(c.type==="output_text"&&c.text)return c.text;return ""}
 function valid(result:any){return result&&Array.isArray(result.questions)&&result.questions.every((q:any)=>typeof q.stem==="string"&&typeof q.answer==="string"&&typeof q.solution==="string"&&Array.isArray(q.knowledgePoints)&&q.thinkingModel&&Array.isArray(q.thinkingModel.steps))}
