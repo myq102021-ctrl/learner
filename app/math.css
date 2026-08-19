@@ -83,6 +83,7 @@
 .solution-panel { background: #fbfcfb !important; }
 .solution-panel .structured-text { gap: 12px; }
 .flash-back .structured-text { margin-top: 12px; }
+.persistent-upload-workspace[hidden] { display: none !important; }
 .model-quick-select { display: grid; gap: 5px; min-width: 280px; padding: 10px 12px; }
 .model-quick-select > span { font-size: 9px; font-weight: 700; letter-spacing: .05em; }
 .model-quick-select select { width: 100%; border: 0; background: transparent; color: #245f5c; font: 600 11px var(--font-geist-sans), sans-serif; outline: none; cursor: pointer; }
