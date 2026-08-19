@@ -42,6 +42,7 @@ const nav = [
 
 export default function Home() {
   const [view, setView] = useState<View>("home");
+  const [sidebarCollapsed,setSidebarCollapsed]=useState(false);
   const [studyIndex, setStudyIndex] = useState(0);
   const [studyQueue,setStudyQueue]=useState<Array<string|number>>([]);
   const [studyMode,setStudyMode]=useState<StudyMode>("quick");
@@ -66,6 +67,8 @@ export default function Home() {
   useEffect(()=>{let cancelled=false;const valid=modelConfigs.filter(config=>config.enabled&&config.validationStatus==="valid");if(!valid.length){setModelChoices([]);return}Promise.all(valid.map(async config=>{try{const response=await fetch("/api/models/discover",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({configId:config.id})});const data=await response.json();if(!response.ok)throw new Error(data.error);const ids=[...new Set<string>((data.models||[]).map((item:GoogleModel)=>item.id).filter(Boolean))];return (ids.length?ids:[config.model]).map(model=>({...config,model,choiceId:`${config.id}::${model}`}))}catch{return [{...config,choiceId:`${config.id}::${config.model}`}]}})).then(groups=>{if(!cancelled)setModelChoices(groups.flat())});return()=>{cancelled=true}},[modelConfigs]);
   useEffect(()=>{let cancelled=false;fetch("/api/cards").then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.error||"读取卡片失败");if(!cancelled){setGeneratedCards(data.cards||[]);setLibraryTags(data.tags||[])}}).catch(()=>{});return()=>{cancelled=true}},[]);
   useEffect(()=>{let cancelled=false;fetch("/api/stats").then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.error||"读取统计失败");if(!cancelled)setStatsData(data)}).catch(()=>{});return()=>{cancelled=true}},[]);
+  useEffect(()=>{setSidebarCollapsed(window.localStorage.getItem("learner-sidebar-collapsed")==="1")},[]);
+  function toggleSidebar(){setSidebarCollapsed(current=>{const next=!current;window.localStorage.setItem("learner-sidebar-collapsed",next?"1":"0");return next})}
 
   async function startStudy(mode:StudyMode){setNotice("");setStudyMode(mode);try{const response=await fetch("/api/cards");const data=await response.json();if(!response.ok)throw new Error(data.error||"读取到期卡片失败");const fresh:Card[]=data.cards||[];const due=fresh.filter(card=>card.memoryStatus!=="mastered"&&(!card.nextReviewAt||new Date(card.nextReviewAt)<=new Date()));setGeneratedCards(fresh);setLibraryTags(data.tags||[]);setStudyQueue(due.map(card=>card.id));setStudyIndex(0);setRevealed(false);setView("study")}catch(error){setNotice(error instanceof Error?error.message:"读取到期卡片失败")}}
 
@@ -75,14 +78,15 @@ export default function Home() {
 
   return (
     <main className="app-shell">
-      <aside className="sidebar">
+      <aside className={`sidebar ${sidebarCollapsed?"collapsed":""}`}>
         <button className="brand" onClick={() => setView("home")}><span className="brand-mark">L</span><span>Learner<small>个人学习机</small></span></button>
+        <button className="sidebar-toggle" onClick={toggleSidebar} aria-label={sidebarCollapsed?"展开菜单栏":"收起菜单栏"} title={sidebarCollapsed?"展开菜单栏":"收起菜单栏"}>{sidebarCollapsed?"›":"‹"}</button>
         <nav>{nav.map(([id, label, icon]) => <button key={id} className={view === id||(id==="cards"&&view==="cardDetail") ? "active" : ""} onClick={() => setView(id as View)}><i>{icon}</i>{label}{id === "cards" && <b>{allCards.length}</b>}</button>)}</nav>
         <div className="sidebar-card"><span>连续学习</span><strong>{statsData.streak} <small>天</small></strong><div className="week">{statsData.trend.slice(-7).map(item=><i className={item.count?"done":""} key={item.date}>{item.count?"✓":item.label.split("/")[1]}</i>)}</div></div>
         <button className="profile"><span>林</span><span>林晓宇<small>学习设置</small></span><i>···</i></button>
       </aside>
 
-      <section className="workspace">
+      <section className={`workspace ${sidebarCollapsed?"sidebar-collapsed":""}`}>
         <header className="topbar"><div className="mobile-logo">Learner</div><button className="search" onClick={() => setView("cards")}><span>⌕</span>搜索卡片、标签或目录 <kbd>⌘ K</kbd></button><div className="top-actions"><button>○</button><button>♧</button><span className="avatar">林</span></div></header>
 
         {view === "home" && <Dashboard onStudy={()=>setView("studySelect")} onUpload={() => setView("upload")} onCards={() => setView("cards")} stats={statsData} cards={allCards} />}
