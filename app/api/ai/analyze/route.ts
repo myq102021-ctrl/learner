@@ -16,7 +16,8 @@ function valid(result:any){return result&&Array.isArray(result.questions)&&resul
 
 export async function POST(request:Request){
   try{
-    const body=await request.json();const {image,provider="openai",model="gpt-5.4",baseUrl,apiKey}=body;if(typeof image!=="string"||!image.startsWith("data:image/"))return Response.json({error:"未收到有效图片"},{status:400});
+    const body=await request.json();let {provider="openai",model="gpt-5.4",baseUrl,apiKey}=body;const {image,modelConfigId}=body;if(typeof image!=="string"||!image.startsWith("data:image/"))return Response.json({error:"未收到有效图片"},{status:400});
+    if(modelConfigId){const uid=request.headers.get("oai-authenticated-user-id")||"local-user";const [stored]=await getDb().select().from(modelConfigs).where(and(eq(modelConfigs.id,modelConfigId),eq(modelConfigs.userId,uid))).limit(1);if(!stored||!stored.enabled)return Response.json({error:"指定的模型不存在或已停用"},{status:404});provider=stored.provider;model=stored.model;baseUrl=stored.baseUrl;apiKey=await decryptApiKey(stored.encryptedApiKey)}
     const key=apiKey||process.env.OPENAI_API_KEY;if(!key)return Response.json({error:"未配置 API Key，请先在设置 → 模型管理中添加"},{status:401});
     let raw="";
     if(provider==="openai"){
@@ -31,3 +32,7 @@ export async function POST(request:Request){
     const cleaned=raw.replace(/^```json\s*/i,"").replace(/```$/i,"").trim();const result=JSON.parse(cleaned);if(!valid(result))throw new Error("AI 返回结构校验失败，请重试");return Response.json(result);
   }catch(error){return Response.json({error:error instanceof Error?error.message:"未知解析错误"},{status:500})}
 }
+import { and, eq } from "drizzle-orm";
+import { getDb } from "../../../../db";
+import { modelConfigs } from "../../../../db/schema";
+import { decryptApiKey } from "../../../../lib/model-secrets";
