@@ -14,8 +14,8 @@ export const directories = sqliteTable("directories", {
 }, t => [index("idx_directories_user_parent").on(t.userId,t.parentId)]);
 
 export const tags = sqliteTable("tags", {
-  id:text("id").primaryKey(), userId:text("user_id").notNull().references(()=>users.id), name:text("name").notNull(), ...timestamps,
-}, t => [uniqueIndex("idx_tags_user_name").on(t.userId,t.name)]);
+  id:text("id").primaryKey(), userId:text("user_id").notNull().references(()=>users.id), name:text("name").notNull(), normalizedName:text("normalized_name").notNull().default(""), ...timestamps,
+}, t => [uniqueIndex("idx_tags_user_normalized_name").on(t.userId,t.normalizedName)]);
 
 export const sourceAssets = sqliteTable("source_assets", {
   id:text("id").primaryKey(), userId:text("user_id").notNull().references(()=>users.id), storageKey:text("storage_key").notNull(), originalName:text("original_name").notNull(), mimeType:text("mime_type").notNull(), size:integer("size").notNull(), width:integer("width"), height:integer("height"), checksum:text("checksum"), status:text("status",{enum:["uploading","ready","failed"]}).notNull(), ...timestamps,

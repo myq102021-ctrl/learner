@@ -15,6 +15,13 @@
       "when": 1787149614808,
       "tag": "0001_graceful_angel",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787152799755,
+      "tag": "0002_watery_bill_hollister",
+      "breakpoints": true
     }
   ]
 }

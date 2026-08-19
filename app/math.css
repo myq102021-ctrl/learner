@@ -10,3 +10,17 @@
 .review-actions { display: flex !important; gap: 14px !important; }
 .review-actions > button { border: 0; background: #edf4f2; color: #36736f; border-radius: 7px; padding: 6px 10px; font-size: 9px; }
 .flash-front .katex, .flash-back .katex { font-size: 1.05em; }
+.tag-editor { margin-top: 14px; border: 1px solid #dce6e3; border-radius: 12px; background: #f8fbfa; padding: 16px; }
+.tag-editor-heading { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.tag-editor-heading div { display: grid; gap: 4px; }
+.tag-editor-heading small { color: #7f898d; font-size: 9px; letter-spacing: .08em; }
+.tag-editor-heading strong { font-size: 12px; }
+.tag-editor-heading > span { color: #547774; font-size: 9px; }
+.selected-tags, .tag-results { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+.selected-tags button, .tag-results button { border: 0; border-radius: 7px; background: #deeeeb; color: #326f6b; padding: 6px 9px; font-size: 10px; }
+.selected-tags button:hover { background: #f4e2da; color: #a95738; }
+.tag-search { display: flex; gap: 8px; margin-top: 12px; }
+.tag-search input { flex: 1; min-width: 0; border: 1px solid #d9e1df; background: white; border-radius: 9px; padding: 10px 12px; outline: none; }
+.tag-search input:focus { border-color: #5b8d89; }
+.tag-search button { border: 0; border-radius: 9px; background: #18333c; color: white; padding: 0 13px; font-size: 10px; }
+.tag-results small, .tag-error { color: #a6543c; font-size: 9px; margin: 5px 0 0; }
