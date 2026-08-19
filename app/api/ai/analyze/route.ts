@@ -18,7 +18,7 @@ function valid(result:any){return result&&Array.isArray(result.questions)&&resul
 export async function POST(request:Request){
   try{
     const body=await request.json();let {provider="openai",model="gpt-5.4",baseUrl,apiKey}=body;const {image,modelConfigId}=body;if(typeof image!=="string"||!image.startsWith("data:image/"))return Response.json({error:"未收到有效图片"},{status:400});
-    if(modelConfigId){const uid=request.headers.get("oai-authenticated-user-id")||"local-user";const [stored]=await getDb().select().from(modelConfigs).where(and(eq(modelConfigs.id,modelConfigId),eq(modelConfigs.userId,uid))).limit(1);if(!stored||!stored.enabled)return Response.json({error:"指定的模型不存在或已停用"},{status:404});provider=stored.provider;model=stored.model;baseUrl=stored.baseUrl;apiKey=await decryptApiKey(stored.encryptedApiKey)}
+    if(modelConfigId){const uid=request.headers.get("oai-authenticated-user-id")||"local-user";const requestedModel=String(model||"").trim();const [stored]=await getDb().select().from(modelConfigs).where(and(eq(modelConfigs.id,modelConfigId),eq(modelConfigs.userId,uid))).limit(1);if(!stored||!stored.enabled||stored.validationStatus!=="valid")return Response.json({error:"指定的模型不存在、未验证或已停用"},{status:404});provider=stored.provider;model=requestedModel||stored.model;baseUrl=stored.baseUrl;apiKey=await decryptApiKey(stored.encryptedApiKey)}
     const key=apiKey||process.env.OPENAI_API_KEY;if(!key)return Response.json({error:"未配置 API Key，请先在设置 → 模型管理中添加"},{status:401});
     let raw="";
     if(provider==="openai"){
