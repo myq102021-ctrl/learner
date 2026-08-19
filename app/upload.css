@@ -1,0 +1,11 @@
+.dropzone.dragging{border-color:#26746f;background:#e7f4f1;box-shadow:0 0 0 4px #39858018;transform:scale(1.006)}
+.dropzone.has-file{height:285px;border-style:solid;display:block;padding:15px;overflow:hidden}
+.dropzone kbd{border:1px solid #d9ddda;background:#f5f5f2;border-radius:5px;padding:2px 5px;color:#64706f}
+.format-hint{font-size:9px;color:#a0a6a7;margin-top:11px;letter-spacing:.09em}
+.upload-preview{width:100%;height:205px;object-fit:contain;background:#e8edeb;border-radius:11px;display:block}
+.remove-upload{position:absolute;right:25px;top:25px;z-index:4;width:30px;height:30px;border:0;border-radius:50%;background:#162b38dc;color:white;font-size:19px;line-height:1}
+.file-summary{height:48px;display:flex;align-items:center;justify-content:space-between;text-align:left;padding:0 5px;position:relative;z-index:3}
+.file-summary strong{font-size:11px;max-width:70%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-summary span{font-size:9px;color:#788586}
+.upload-message{margin-top:9px;border-radius:8px;padding:9px 12px;font-size:10px}
+.upload-message.success{background:#e4f2ec;color:#34715d}.upload-message.error{background:#fae9e5;color:#a34e3d}
