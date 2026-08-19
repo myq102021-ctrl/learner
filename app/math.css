@@ -34,7 +34,7 @@
 .card-time-badges > span { display: flex; align-items: center; gap: 5px; border: 1px solid #dce5e2; border-radius: 7px; background: #f4f8f6; color: #4f6667; padding: 4px 7px; font-size: 8px; white-space: nowrap; }
 .card-time-badges small { color: #33736e; font-size: 8px; font-weight: 700; }
 @media (max-width: 760px) { .card-meta-row { display: grid; } .card-time-badges { justify-content: flex-start; } }
-.card-detail-page { max-width: 1180px; }
+.card-detail-page { max-width: 1180px; height: calc(100vh - 70px); padding-bottom: 24px; overflow: hidden; display: flex; flex-direction: column; }
 .card-detail-page > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
 .detail-back { border: 0; background: transparent; color: #356f6b; padding: 8px 0; font-size: 11px; font-weight: 650; }
 .detail-page-heading { margin-bottom: 24px; }
@@ -43,9 +43,9 @@
 .card-detail-actions { display: flex; align-items: center; gap: 9px; }
 .card-detail-actions .delete-card { width: auto; height: 34px; border-radius: 9px; padding: 0 13px; background: #fff0eb; color: #af4f35; font-size: 10px; font-weight: 650; }
 .card-detail-actions .delete-card:disabled { opacity: .55; cursor: wait; }
-.card-detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); gap: 22px; align-items: start; }
+.card-detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); gap: 22px; align-items: stretch; flex: 1; min-height: 0; }
 .card-detail-grid small { display: block; color: #7d898d; font-size: 9px; letter-spacing: .1em; margin-bottom: 10px; }
-.detail-left, .detail-right { display: grid; gap: 14px; }
+.detail-left, .detail-right { display: grid; align-content: start; gap: 14px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding-right: 8px; }
 .detail-left > section, .detail-right > section { background: white; border: 1px solid #e4e7e5; border-radius: 13px; padding: 18px; font-size: 13px; }
 .detail-left img { width: 100%; max-height: 440px; object-fit: contain; background: #f7f7f4; border-radius: 10px; }
 .missing-source { min-height: 240px; display: grid; place-items: center; text-align: center; border: 1px dashed #cfd8d5; border-radius: 12px; color: #8a9497; font-size: 11px; }
@@ -56,7 +56,7 @@
 .detail-thinking { background: #eef5f2 !important; }
 .detail-thinking h3 { margin: 0 0 8px; font: 16px Georgia, "Songti SC", serif; }
 .detail-thinking li { margin-top: 5px; }
-@media (max-width: 760px) { .card-detail-grid { grid-template-columns: 1fr; } .detail-left img { max-height: 320px; } }
+@media (max-width: 760px) { .card-detail-page { height: auto; overflow: visible; display: block; padding-bottom: 80px; } .card-detail-grid { grid-template-columns: 1fr; } .detail-left, .detail-right { overflow: visible; padding-right: 0; } .detail-left img { max-height: 320px; } }
 .library-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 18px; align-items: start; }
 .tag-sidebar { position: sticky; top: 88px; border: 1px solid #e2e6e4; border-radius: 14px; background: white; padding: 14px; }
 .tag-sidebar > header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
