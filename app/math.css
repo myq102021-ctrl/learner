@@ -29,6 +29,11 @@
 .tag-results small, .tag-error { color: #a6543c; font-size: 9px; margin: 5px 0 0; }
 .model-sync-status { float: right; color: #4f817d; font-size: 9px; font-weight: 500; letter-spacing: 0; }
 .detail-trigger { position: static !important; margin-top: 12px; width: max-content; color: #286d69; font-size: 10px; font-weight: 650; }
+.card-meta-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.card-time-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.card-time-badges > span { display: flex; align-items: center; gap: 5px; border: 1px solid #dce5e2; border-radius: 7px; background: #f4f8f6; color: #4f6667; padding: 4px 7px; font-size: 8px; white-space: nowrap; }
+.card-time-badges small { color: #33736e; font-size: 8px; font-weight: 700; }
+@media (max-width: 760px) { .card-meta-row { display: grid; } .card-time-badges { justify-content: flex-start; } }
 .card-detail-page { max-width: 1180px; }
 .card-detail-page > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
 .detail-back { border: 0; background: transparent; color: #356f6b; padding: 8px 0; font-size: 11px; font-weight: 650; }
