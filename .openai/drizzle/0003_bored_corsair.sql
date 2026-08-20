@@ -1,0 +1,1 @@
+ALTER TABLE `learning_cards` ADD `source_asset_id` text REFERENCES source_assets(id);
