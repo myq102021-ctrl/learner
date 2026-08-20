@@ -10,21 +10,20 @@ async function validateStored(row:typeof modelConfigs.$inferSelect){const result
 
 export async function GET(request:Request){
   try{
-    const rows=await (await getDb()).select().from(modelConfigs).where(eq(modelConfigs.userId,userId(request)));const now=Date.now();
-    const checked=await Promise.all(rows.map(row=>{const ttl=row.validationStatus==="valid"?24*60*60*1000:10*60*1000;return row.enabled&&(!row.lastValidatedAt||now-row.lastValidatedAt.getTime()>ttl)?validateStored(row):row}));
-    return Response.json({configs:checked.map(publicConfig)});
+    const rows=await (await getDb()).select().from(modelConfigs).where(eq(modelConfigs.userId,userId(request)));
+    return Response.json({configs:rows.map(publicConfig)});
   }catch(e){return Response.json({error:e instanceof Error?e.message:"读取模型失败"},{status:500})}
 }
 export async function POST(request:Request){
   try{
     const body=await request.json();const apiKey=String(body.apiKey||"").trim();const model=String(body.model||"").trim();if(!apiKey||!model)return Response.json({error:"模型和 API Key 为必填项"},{status:400});
-    const validation=await validateModelConfig({provider:String(body.provider),model,baseUrl:String(body.baseUrl||""),apiKey});if(!validation.valid)return Response.json({error:`模型校验未通过：${validation.error}`},{status:400});
-    const db=(await getDb());const uid=userId(request);const existing=await db.select({id:modelConfigs.id}).from(modelConfigs).where(eq(modelConfigs.userId,uid));const now=new Date();const row={id:crypto.randomUUID(),userId:uid,provider:String(body.provider),providerLabel:String(body.providerLabel),model,baseUrl:String(body.baseUrl||""),encryptedApiKey:await encryptApiKey(apiKey),keyLast4:apiKey.slice(-4),enabled:true,isDefault:existing.length===0,validationStatus:"valid" as const,validationError:null,lastValidatedAt:now,createdAt:now,updatedAt:now};await db.insert(modelConfigs).values(row);return Response.json({config:publicConfig(row)},{status:201});
+    const db=(await getDb());const uid=userId(request);const existing=await db.select({id:modelConfigs.id}).from(modelConfigs).where(eq(modelConfigs.userId,uid));const now=new Date();const row={id:crypto.randomUUID(),userId:uid,provider:String(body.provider),providerLabel:String(body.providerLabel),model,baseUrl:String(body.baseUrl||""),encryptedApiKey:await encryptApiKey(apiKey),keyLast4:apiKey.slice(-4),enabled:true,isDefault:existing.length===0,validationStatus:"pending" as const,validationError:null,lastValidatedAt:null,createdAt:now,updatedAt:now};await db.insert(modelConfigs).values(row);return Response.json({config:publicConfig(row)},{status:201});
   }catch(e){return Response.json({error:e instanceof Error?e.message:"保存模型失败"},{status:500})}
 }
 export async function PATCH(request:Request){
   try{
     const body=await request.json();const uid=userId(request);const db=(await getDb());const [stored]=await db.select().from(modelConfigs).where(and(eq(modelConfigs.id,String(body.id)),eq(modelConfigs.userId,uid))).limit(1);if(!stored)return Response.json({error:"模型配置不存在"},{status:404});
+    if(body.validate===true){const validated=await validateStored(stored);return Response.json({ok:validated.validationStatus==="valid",validationStatus:validated.validationStatus,validationError:validated.validationError,lastValidatedAt:validated.lastValidatedAt})}
     const nextModel=typeof body.model==="string"&&body.model.trim()?body.model.trim():stored.model;let validated=stored;
     if(nextModel!==stored.model||body.enabled===true||stored.validationStatus!=="valid")validated=await validateStored({...stored,model:nextModel});
     if(validated.validationStatus!=="valid")return Response.json({error:`模型校验未通过：${validated.validationError||"无法连接"}`},{status:400});

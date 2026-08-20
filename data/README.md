@@ -1,4 +1,4 @@
-# Learner 本地数据
+# 悟道本地数据
 
 运行 `npm run local:start` 后，数据库与上传图片会持久保存在 `data/runtime/`。
 

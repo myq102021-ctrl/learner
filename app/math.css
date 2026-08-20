@@ -107,4 +107,5 @@
 .validation-badge.invalid { background: #fff0e9 !important; color: #ae4f32 !important; }
 .validation-badge.pending { background: #f1f0ec !important; color: #777f80 !important; }
 .validation-error { display: block; margin-top: 4px; color: #ae4f32 !important; }
+.retry-validation { border: 0; background: transparent; color: #35736f; font-size: 9px; padding: 0; cursor: pointer; }
 @media (max-width: 640px) { .model-quick-select, .model-unavailable { width: 100%; min-width: 0; } }
