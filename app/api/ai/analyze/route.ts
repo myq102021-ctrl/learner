@@ -12,17 +12,17 @@ const questionPrompt=`你是悟道个人学习机的题目分析引擎。仔细�
 6. solution 必须分层输出，每个部分单独换行，固定使用“思路：”、“步骤 1：”、“步骤 2：”……、“结论：”的结构。每步只表达一个关键推理，避免冗长重复和自我否定式的过程。
 7. 所有内容使用中文，除非原题为其他语言。`;
 
-const memorizationPrompt=`你是悟道个人学习机的背诵内容分析引擎。根据用户上传的图片提取需要记忆的知识，并拆分成若干独立、简洁、适合间隔复习的背诵单元。
-目标是帮助学习者真正记住知识，并知道如何使用、用在什么场景。
-每个背诵单元必须遵循：
-1. stem：根据该单元内容自动生成一个明确的回忆问题，作为卡片正面；问题必须能独立理解，不能直接泄露答案。
-2. options：固定输出空数组。
-3. answer：作为卡片核心答案，必须包含“原始内容：”和“背诵要点：”两部分。原始内容忠实保留图片中的关键信息；背诵要点要简洁精炼，不遗漏必要条件。
-4. solution：固定使用“知识解析：”“背诵技巧：”“关键词总结：”“怎么用：”“用在哪：”五部分，每部分单独换行。解释知识含义、记忆方法、关键词、使用方法和适用场景。
-5. knowledgePoints：列出简短、稳定的知识点名称与一句话总结，用于生成标签。
-6. thinkingModel.name：填写适合该知识的记忆模型名称；description 说明记忆逻辑；steps 给出可执行的记忆与应用步骤。
-7. questionNumber 使用“要点 1”“要点 2”格式；difficulty 表示记忆难度，范围 1 到 5。
-8. 相同内容不要重复生成；图片模糊时明确标注不确定，不要编造；所有内容默认使用中文。`;
+const memorizationPrompt=`你是悟道个人学习机的背诵卡片问题生成器。阅读用户上传的整张图片，只生成一个能够覆盖图片全部核心内容的总问题，供学习者看到问题后回忆整张图片。
+必须遵循：
+1. questions 数组只能包含一个对象，不能拆分成多个问题或多个背诵要点。
+2. stem：只写一个简洁、明确的总问题，作为卡片正面。问题不能直接泄露答案，也不要罗列图片内容。
+3. options：固定输出空数组。
+4. answer：固定填写“查看原图”。卡片答案将直接展示用户上传的图片，不需要转写图片文字。
+5. solution：固定填写“请对照原图完成回忆”。不要生成知识解析、背诵技巧或文字总结。
+6. knowledgePoints：根据图片主题生成 1 至 3 个简短标签。
+7. thinkingModel.name 固定填写“整图回忆”；description 简短说明先回答总问题再对照原图；steps 只包含“尝试完整回忆”和“对照原图检查遗漏”。
+8. questionNumber 固定填写“1”；difficulty 表示整张图片的记忆难度，范围 1 到 5。
+9. 图片模糊时在总问题中标明内容可能不完整，不要编造；所有内容默认使用中文。`;
 
 function outputText(data:any){if(typeof data.output_text==="string")return data.output_text;for(const item of data.output||[])for(const c of item.content||[])if(c.type==="output_text"&&c.text)return c.text;return ""}
 function valid(result:any){return result&&Array.isArray(result.questions)&&result.questions.every((q:any)=>typeof q.stem==="string"&&typeof q.answer==="string"&&typeof q.solution==="string"&&Array.isArray(q.knowledgePoints)&&q.thinkingModel&&Array.isArray(q.thinkingModel.steps))}
