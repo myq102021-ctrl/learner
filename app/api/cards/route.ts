@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { env } from "cloudflare:workers";
 import { getDb } from "../../../db";
-import { learningCards, learningCardTags, memoryStates, reviewEvents, sourceAssets, tags, users } from "../../../db/schema";
+import { cardGenerationBatches, learningCards, learningCardTags, memoryStates, reviewEvents, sourceAssets, tags, users } from "../../../db/schema";
 
 function identity(request:Request){return {id:request.headers.get("oai-authenticated-user-id")||"local-user",email:request.headers.get("oai-authenticated-user-email")||"local@learner.app"}}
 function normalize(value:string){return value.trim().replace(/\s+/g," ").toLocaleLowerCase()}
@@ -27,8 +27,9 @@ export async function GET(request:Request){
 }
 
 export async function POST(request:Request){
+  let batchId="";let db:Awaited<ReturnType<typeof getDb>>|null=null;
   try{
-    const uid=await ensureUser(request);const body=await request.json();if(!Array.isArray(body.cards)||!body.cards.length)return Response.json({error:"没有可保存的卡片"},{status:400});const db=(await getDb());const now=new Date();let sourceAssetId:string|null=null;
+    const uid=await ensureUser(request);const body=await request.json();if(!Array.isArray(body.cards)||!body.cards.length)return Response.json({error:"没有可保存的卡片"},{status:400});const generationKey=String(body.generationKey||"").trim();if(!generationKey)return Response.json({error:"缺少生成批次标识"},{status:400});db=await getDb();const now=new Date();batchId=crypto.randomUUID();await db.insert(cardGenerationBatches).values({id:batchId,userId:uid,generationKey,status:"pending",responseJson:null,createdAt:now,updatedAt:now}).onConflictDoNothing();const [batch]=await db.select().from(cardGenerationBatches).where(and(eq(cardGenerationBatches.userId,uid),eq(cardGenerationBatches.generationKey,generationKey))).limit(1);if(batch?.id!==batchId){if(batch?.status==="completed"&&batch.responseJson)return Response.json(JSON.parse(batch.responseJson),{status:200});return Response.json({error:"这批卡片正在生成，请勿重复提交",pending:true},{status:409})}let sourceAssetId:string|null=null;
     if(typeof body.sourceImage==="string"){
       const match=body.sourceImage.match(/^data:(image\/[^;]+);base64,(.+)$/);if(match){const bytes=Uint8Array.from(atob(match[2]),char=>char.charCodeAt(0));sourceAssetId=crypto.randomUUID();const extension=match[1].split("/")[1]||"png";const storageKey=`users/${uid}/sources/${sourceAssetId}.${extension}`;await env.UPLOADS.put(storageKey,bytes,{httpMetadata:{contentType:match[1]},customMetadata:{optimized:match[1]==="image/webp"?"true":"false"}});await db.insert(sourceAssets).values({id:sourceAssetId,userId:uid,storageKey,originalName:String(body.sourceName||`source.${extension}`),mimeType:match[1],size:bytes.byteLength,width:Number.isFinite(body.sourceWidth)?Math.round(body.sourceWidth):null,height:Number.isFinite(body.sourceHeight)?Math.round(body.sourceHeight):null,checksum:null,status:"ready",createdAt:now,updatedAt:now})}
     }
@@ -40,8 +41,8 @@ export async function POST(request:Request){
       for(const [normalizedName,name] of uniqueNames){let [tag]=await db.select({id:tags.id,name:tags.name}).from(tags).where(and(eq(tags.userId,uid),eq(tags.normalizedName,normalizedName))).limit(1);if(!tag){const id=crypto.randomUUID();await db.insert(tags).values({id,userId:uid,name,normalizedName,createdAt:now,updatedAt:now}).onConflictDoNothing();[tag]=await db.select({id:tags.id,name:tags.name}).from(tags).where(and(eq(tags.userId,uid),eq(tags.normalizedName,normalizedName))).limit(1)}if(tag)await db.insert(learningCardTags).values({learningCardId:card.id,tagId:tag.id}).onConflictDoNothing()}
       created.push({id:card.id,type:cardType==="memorization"?"背诵":"原题",front:card.front,back:card.back,path:"AI 解析 / 待归类",tags:uniqueNames.map(([,name])=>name),interval:"新卡片",tone:"orange",createdAt:now,lastReviewAt:null,nextReviewAt:null,memoryStatus:"new",sourceUrl:sourceAssetId?`/api/assets/${sourceAssetId}`:null,detail});
     }
-    return Response.json({cards:created},{status:201});
-  }catch(error){return Response.json({error:error instanceof Error?error.message:"保存卡片失败"},{status:500})}
+    const result={cards:created};await db.update(cardGenerationBatches).set({status:"completed",responseJson:JSON.stringify(result),updatedAt:new Date()}).where(eq(cardGenerationBatches.id,batchId));return Response.json(result,{status:201});
+  }catch(error){if(db&&batchId)await db.delete(cardGenerationBatches).where(and(eq(cardGenerationBatches.id,batchId),eq(cardGenerationBatches.status,"pending"))).catch(()=>{});return Response.json({error:error instanceof Error?error.message:"保存卡片失败"},{status:500})}
 }
 
 export async function DELETE(request:Request){

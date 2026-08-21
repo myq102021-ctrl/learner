@@ -41,6 +41,10 @@ export const learningCards = sqliteTable("learning_cards", {
   id:text("id").primaryKey(), userId:text("user_id").notNull().references(()=>users.id), cardType:text("card_type",{enum:["question","knowledge","thinking_model","memorization"]}).notNull(), front:text("front").notNull(), back:text("back").notNull(), explanation:text("explanation"), sourceAssetId:text("source_asset_id").references(()=>sourceAssets.id), directoryId:text("directory_id").references(()=>directories.id), status:text("status",{enum:["active","archived"]}).notNull().default("active"), archivedAt:integer("archived_at",{mode:"timestamp"}), ...timestamps,
 }, t => [index("idx_cards_user_status_created").on(t.userId,t.status,t.createdAt),index("idx_cards_source_asset").on(t.sourceAssetId)]);
 
+export const cardGenerationBatches = sqliteTable("card_generation_batches", {
+  id:text("id").primaryKey(), userId:text("user_id").notNull().references(()=>users.id), generationKey:text("generation_key").notNull(), status:text("status",{enum:["pending","completed"]}).notNull(), responseJson:text("response_json"), createdAt:integer("created_at",{mode:"timestamp"}).notNull(), updatedAt:integer("updated_at",{mode:"timestamp"}).notNull(),
+}, t => [uniqueIndex("idx_card_generation_user_key").on(t.userId,t.generationKey),index("idx_card_generation_created").on(t.createdAt)]);
+
 export const learningCardTags = sqliteTable("learning_card_tags", {
   learningCardId:text("learning_card_id").notNull().references(()=>learningCards.id), tagId:text("tag_id").notNull().references(()=>tags.id),
 }, t => [primaryKey({columns:[t.learningCardId,t.tagId]})]);

@@ -8,8 +8,9 @@ import migration3 from "../.openai/drizzle/0003_bored_corsair.sql?raw";
 import migration4 from "../.openai/drizzle/0004_flowery_the_captain.sql?raw";
 import migration5 from "../.openai/drizzle/0005_overconfident_living_tribunal.sql?raw";
 import migration6 from "../.openai/drizzle/0006_clear_the_hood.sql?raw";
+import migration7 from "../.openai/drizzle/0007_card_generation_batches.sql?raw";
 
-const migrations=[migration0,migration1,migration2,migration3,migration4,migration5,migration6];
+const migrations=[migration0,migration1,migration2,migration3,migration4,migration5,migration6,migration7];
 let initialization:Promise<void>|null=null;
 
 async function ensureSchema(){
@@ -22,6 +23,8 @@ async function ensureSchema(){
   if(existing){
     const diaries=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='learning_diaries'").first();
     if(!diaries){const statements=migration6.split("--> statement-breakpoint").map(statement=>statement.trim()).filter(Boolean);await env.DB.batch(statements.map(statement=>env.DB.prepare(statement)))}
+    const generationBatches=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='card_generation_batches'").first();
+    if(!generationBatches){const statements=migration7.split("--> statement-breakpoint").map(statement=>statement.trim()).filter(Boolean);await env.DB.batch(statements.map(statement=>env.DB.prepare(statement)))}
     return;
   }
   for(const migration of migrations){
