@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   title: "悟道 · 个人学习机",
-  description: "把你的学习资料变成可以长期记住的学习卡片。",
+  description: "把你的学习资料变成可以长期记住的知识卡片。",
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
   openGraph: { title: "悟道 · 个人学习机", description: "把知识变成长久记忆", images: ["/og.png"] },
   twitter: { card: "summary_large_image", title: "悟道 · 个人学习机", description: "把知识变成长久记忆", images: ["/og.png"] },

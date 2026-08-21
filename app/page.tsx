@@ -50,7 +50,7 @@ function splitCardFront(card:Card){
 function CardQuestionPreview({card}:{card:Card}){const {stem,options,compact}=splitCardFront(card);return <div className="card-question-preview"><h3><MathText>{stem}</MathText></h3>{options.length>0&&<div className={`card-preview-options ${compact?"compact":"stacked"}`}>{options.map((option,index)=><span key={`${option}-${index}`}><MathText>{option}</MathText></span>)}</div>}</div>}
 
 const nav = [
-  ["home", "首页", "◈"], ["upload", "上传学习内容", "↑"], ["cards", "学习卡片", "▱"], ["stats", "学习统计", "⌑"], ["diary", "悟道日记", "▦"], ["settings", "设置", "⚙"],
+  ["home", "首页", "◈"], ["upload", "上传知识内容", "↑"], ["cards", "知识卡片", "▱"], ["stats", "学习统计", "⌑"], ["diary", "悟道日记", "▦"], ["settings", "设置", "⚙"],
 ] as const;
 
 export default function Home() {
