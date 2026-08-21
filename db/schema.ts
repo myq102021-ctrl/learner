@@ -56,3 +56,7 @@ export const reviewEvents = sqliteTable("review_events", {
 export const modelConfigs = sqliteTable("model_configs", {
   id:text("id").primaryKey(), userId:text("user_id").notNull(), provider:text("provider").notNull(), providerLabel:text("provider_label").notNull(), model:text("model").notNull(), baseUrl:text("base_url").notNull(), encryptedApiKey:text("encrypted_api_key").notNull(), keyLast4:text("key_last4").notNull(), enabled:integer("enabled",{mode:"boolean"}).notNull().default(true), isDefault:integer("is_default",{mode:"boolean"}).notNull().default(false), validationStatus:text("validation_status",{enum:["pending","valid","invalid"]}).notNull().default("pending"), validationError:text("validation_error"), lastValidatedAt:integer("last_validated_at",{mode:"timestamp"}), ...timestamps,
 }, t => [index("idx_model_configs_user").on(t.userId),index("idx_model_configs_user_default").on(t.userId,t.isDefault)]);
+
+export const learningDiaries = sqliteTable("learning_diaries", {
+  id:text("id").primaryKey(), userId:text("user_id").notNull().references(()=>users.id), entryDate:text("entry_date").notNull(), title:text("title").notNull(), content:text("content").notNull(), ...timestamps,
+}, t => [index("idx_diaries_user_date").on(t.userId,t.entryDate),index("idx_diaries_user_created").on(t.userId,t.createdAt)]);

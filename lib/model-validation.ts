@@ -13,10 +13,11 @@ export async function validateModelConfig(input:ModelValidationInput){
       const base=cleanBase(input.baseUrl,"https://api.anthropic.com/v1");
       response=await fetch(`${base}/models/${encodeURIComponent(model)}`,{headers:{"x-api-key":input.apiKey,"anthropic-version":"2023-06-01"}});
     }else{
-      const fallback=input.provider==="deepseek"?"https://api.deepseek.com/v1":"https://api.openai.com/v1";
+      const fallback=input.provider==="deepseek"?"https://api.deepseek.com/v1":input.provider==="alibaba"?"https://dashscope.aliyuncs.com/compatible-mode/v1":input.provider==="byteplus"?"https://ark.cn-beijing.volces.com/api/v3":"https://api.openai.com/v1";
       const base=cleanBase(input.baseUrl,fallback);
-      response=await fetch(`${base}/models`,{headers:{authorization:`Bearer ${input.apiKey}`}});
-      if(response.ok){const data=await response.json() as {data?:Array<{id?:string}>};if(Array.isArray(data.data)&&data.data.length&&!data.data.some(item=>item.id===model))return {valid:false,error:`当前 API Key 无权使用模型 ${model}`}}
+      const modelsUrl=input.provider==="alibaba"?`${base.replace(/\/compatible-mode\/v1$/,"").replace(/\/api\/v1$/,"")}/api/v1/models?page_no=1&page_size=500`:`${base}/models`;
+      response=await fetch(modelsUrl,{headers:{authorization:`Bearer ${input.apiKey}`}});
+      if(response.ok){const data=await response.json() as {data?:Array<{id?:string}>;output?:{models?:Array<{model?:string}>}};const ids=input.provider==="alibaba"?data.output?.models?.map(item=>item.model):data.data?.map(item=>item.id);if(Array.isArray(ids)&&ids.length&&!ids.includes(model))return {valid:false,error:`当前 API Key 无权使用模型 ${model}`}}
     }
     if(!response.ok)return {valid:false,error:await errorMessage(response)};
     return {valid:true,error:null};
