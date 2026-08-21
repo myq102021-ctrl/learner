@@ -8,6 +8,7 @@ import "./math.css";
 import "./theme.css";
 import "./diary-theme.css";
 import "./responsive.css";
+import "./knowledge-tree.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
