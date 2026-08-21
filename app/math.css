@@ -41,6 +41,8 @@
 .detail-page-heading h1 { margin: 6px 0; font: 30px Georgia, "Songti SC", serif; }
 .detail-page-heading p { margin: 0; color: #7c888c; font-size: 11px; }
 .card-detail-actions { display: flex; align-items: center; gap: 9px; }
+.card-detail-actions button { min-height: 34px; border: 1px solid #a8b0c4; border-radius: 5px; background: #f5f6fa; color: #505972; padding: 0 13px; font-size: 10px; font-weight: 650; }
+.card-detail-actions .edit-card { background: #e9e7f7; border-color: #9e97c8; color: #554a9a; }
 .card-detail-actions .delete-card { width: auto; height: 34px; border-radius: 9px; padding: 0 13px; background: #fff0eb; color: #af4f35; font-size: 10px; font-weight: 650; }
 .card-detail-actions .delete-card:disabled { opacity: .55; cursor: wait; }
 .card-detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); gap: 22px; align-items: stretch; flex: 1; min-height: 0; }
@@ -53,6 +55,16 @@
 .memorization-detail-flow > section { min-width: 0; padding: 22px; background: #fff; border: 1px solid #d9deda; border-radius: 13px; font-size: 13px; }
 .memorization-detail-flow small { display: block; margin-bottom: 12px; color: #7d898d; font-size: 9px; letter-spacing: .1em; }
 .memorization-source img { display: block; width: 100%; height: auto; max-height: none; object-fit: contain; background: #f7f7f4; border-radius: 10px; }
+.card-edit-page { height: auto; min-height: calc(100vh - 70px); overflow: visible; display: block; padding-bottom: 80px; }
+.card-edit-form { display: grid; gap: 18px; }
+.card-edit-form > label, .card-edit-form fieldset { display: grid; gap: 9px; margin: 0; padding: 20px; border: 1px solid #aeb6c8; border-radius: 5px; background: #f7f8fb; }
+.card-edit-form label span, .card-edit-form legend { color: #545d77; font-size: 11px; font-weight: 700; }
+.card-edit-form textarea, .card-edit-form input { width: 100%; border: 1px solid #aab2c5; border-radius: 4px; background: #fff; color: #424861; padding: 11px 12px; font: inherit; line-height: 1.65; outline: none; }
+.card-edit-form textarea { min-height: 120px; resize: vertical; }
+.card-edit-form textarea:focus, .card-edit-form input:focus { border-color: #7161d0; box-shadow: 0 0 0 2px #7161d01d; }
+.card-edit-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.card-edit-columns label { display: grid; gap: 9px; padding: 20px; border: 1px solid #aeb6c8; border-radius: 5px; background: #f7f8fb; }
+.card-edit-form fieldset textarea { min-height: 90px; }
 .missing-source { min-height: 240px; display: grid; place-items: center; text-align: center; border: 1px dashed #cfd8d5; border-radius: 12px; color: #8a9497; font-size: 11px; }
 .image-loading { min-height: 180px; display: grid; place-items: center; border-radius: 10px; background: linear-gradient(100deg,#f1f3f2 30%,#fafbfa 50%,#f1f3f2 70%); background-size: 200% 100%; color: #7d898d; font-size: 11px; animation: image-loading 1.4s linear infinite; }
 @keyframes image-loading { to { background-position: -200% 0; } }
@@ -95,7 +107,7 @@
 .detail-thinking { background: #eef5f2 !important; }
 .detail-thinking h3 { margin: 0 0 8px; font: 16px Georgia, "Songti SC", serif; }
 .detail-thinking li { margin-top: 5px; }
-@media (max-width: 760px) { .card-detail-page { height: auto; overflow: visible; display: block; padding-bottom: 80px; } .card-detail-grid { grid-template-columns: 1fr; } .detail-left, .detail-right { overflow: visible; padding-right: 0; } .detail-left img { max-height: 320px; } }
+@media (max-width: 760px) { .card-detail-page { height: auto; overflow: visible; display: block; padding-bottom: 80px; } .card-detail-grid,.card-edit-columns { grid-template-columns: 1fr; } .detail-left, .detail-right { overflow: visible; padding-right: 0; } .detail-left img { max-height: 320px; } }
 .library-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 18px; align-items: start; }
 .tag-sidebar { position: sticky; top: 88px; border: 1px solid #e2e6e4; border-radius: 14px; background: white; padding: 14px; }
 .tag-sidebar > header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
