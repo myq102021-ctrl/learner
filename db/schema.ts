@@ -38,7 +38,7 @@ export const questionSolutions = sqliteTable("question_solutions", {
 }, t => [uniqueIndex("idx_solutions_question_version").on(t.questionId,t.version)]);
 
 export const learningCards = sqliteTable("learning_cards", {
-  id:text("id").primaryKey(), userId:text("user_id").notNull().references(()=>users.id), cardType:text("card_type",{enum:["question","knowledge","thinking_model","memorization"]}).notNull(), front:text("front").notNull(), back:text("back").notNull(), explanation:text("explanation"), sourceAssetId:text("source_asset_id").references(()=>sourceAssets.id), directoryId:text("directory_id").references(()=>directories.id), status:text("status",{enum:["active","archived"]}).notNull().default("active"), archivedAt:integer("archived_at",{mode:"timestamp"}), ...timestamps,
+  id:text("id").primaryKey(), userId:text("user_id").notNull().references(()=>users.id), cardType:text("card_type",{enum:["question","knowledge","thinking_model","memorization"]}).notNull(), front:text("front").notNull(), back:text("back").notNull(), explanation:text("explanation"), personalNote:text("personal_note"), sourceAssetId:text("source_asset_id").references(()=>sourceAssets.id), directoryId:text("directory_id").references(()=>directories.id), status:text("status",{enum:["active","archived"]}).notNull().default("active"), archivedAt:integer("archived_at",{mode:"timestamp"}), ...timestamps,
 }, t => [index("idx_cards_user_status_created").on(t.userId,t.status,t.createdAt),index("idx_cards_source_asset").on(t.sourceAssetId)]);
 
 export const cardGenerationBatches = sqliteTable("card_generation_batches", {
