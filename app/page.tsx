@@ -59,6 +59,7 @@ export default function Home() {
   const [studyIndex, setStudyIndex] = useState(0);
   const [studyQueue,setStudyQueue]=useState<Array<string|number>>([]);
   const [studyMode,setStudyMode]=useState<StudyMode>("quick");
+  const [studyReturnView,setStudyReturnView]=useState<View>("home");
   const [revealed, setRevealed] = useState(false);
   const [query, setQuery] = useState("");
   const [uploadMode, setUploadMode] = useState<"memorization" | "question" | null>(null);
@@ -82,6 +83,7 @@ export default function Home() {
   useEffect(()=>{let cancelled=false;fetch("/api/stats").then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.error||"读取统计失败");if(!cancelled)setStatsData(data)}).catch(()=>{});return()=>{cancelled=true}},[]);
   useEffect(()=>{setSidebarCollapsed(window.localStorage.getItem("learner-sidebar-collapsed")==="1")},[]);
   function toggleSidebar(){setSidebarCollapsed(current=>{const next=!current;window.localStorage.setItem("learner-sidebar-collapsed",next?"1":"0");return next})}
+  function openStudy(from:View){setStudyReturnView(from);setView("studySelect")}
 
   async function startStudy(mode:StudyMode){setNotice("");setStudyMode(mode);try{const response=await fetch("/api/cards");const data=await response.json();if(!response.ok)throw new Error(data.error||"读取到期卡片失败");const fresh:Card[]=data.cards||[];const due=fresh.filter(card=>card.memoryStatus!=="mastered"&&(!card.nextReviewAt||new Date(card.nextReviewAt)<=new Date()));setGeneratedCards(fresh);setLibraryTags(data.tags||[]);setStudyQueue(due.map(card=>card.id));setStudyIndex(0);setRevealed(false);setView("study")}catch(error){setNotice(error instanceof Error?error.message:"读取到期卡片失败")}}
 
@@ -101,13 +103,13 @@ export default function Home() {
       <section className={`workspace ${sidebarCollapsed?"sidebar-collapsed":""}`}>
         <header className="topbar"><div className="mobile-logo">悟道</div><button className="search" onClick={() => setView("cards")}><span>⌕</span>搜索卡片、标签或目录 <kbd>⌘ K</kbd></button><div className="top-actions"><button>○</button><button>♧</button><span className="avatar">林</span></div></header>
 
-        {view === "home" && <Dashboard onStudy={()=>setView("studySelect")} onUpload={() => setView("upload")} onCards={() => setView("cards")} stats={statsData} cards={allCards} />}
-        {view === "cards" && <CardLibrary cards={filtered} tags={libraryTags} query={query} setQuery={setQuery} dueCount={statsData.dueCount} onStudy={()=>setView("studySelect")} onOpenDetail={card=>{setCardReturnView("cards");setSelectedCard(card);setView("cardDetail")}} />}
+        {view === "home" && <Dashboard onStudy={()=>openStudy("home")} onUpload={() => setView("upload")} onCards={() => setView("cards")} stats={statsData} cards={allCards} />}
+        {view === "cards" && <CardLibrary cards={filtered} tags={libraryTags} query={query} setQuery={setQuery} dueCount={statsData.dueCount} onStudy={()=>openStudy("cards")} onOpenDetail={card=>{setCardReturnView("cards");setSelectedCard(card);setView("cardDetail")}} />}
         <div hidden={view!=="knowledgeTree"}><KnowledgeMap cards={allCards} onOpenCard={card=>{setCardReturnView("knowledgeTree");setSelectedCard(card);setView("cardDetail")}} /></div>
         {view === "cardDetail" && selectedCard && <CardDetail card={selectedCard} backLabel={cardReturnView==="knowledgeTree"?"返回知识树":"返回知识卡片"} onClose={()=>setView(cardReturnView)} onUpdated={updated=>{const merged={...selectedCard,...updated};setSelectedCard(merged);setGeneratedCards(items=>items.map(card=>card.id===merged.id?merged:card))}} onDeleted={()=>{setGeneratedCards(items=>items.filter(card=>card.id!==selectedCard.id));setSelectedCard(null);setView(cardReturnView)}}/>}
         <div className="persistent-upload-workspace" hidden={view!=="upload"}><AIUpload active={view==="upload"} mode={uploadMode} setMode={setUploadMode} model={activeModel} models={modelChoices} onModelChange={setSelectedModelId} onCardsGenerated={newCards=>{setGeneratedCards(prev=>[...newCards,...prev]);setView("cards")}} /></div>
-        {view === "studySelect" && <StudyModeSelect dueCount={statsData.dueCount} onSelect={mode=>void startStudy(mode)} onClose={()=>setView("cards")}/>}
-        {view === "study" && <Study mode={studyMode} card={activeCard} model={activeModel} revealed={revealed} setRevealed={setRevealed} rate={rate} current={Math.min(studyIndex+1,studyQueue.length)} total={studyQueue.length} notice={notice} onExit={() => setView("home")} />}
+        {view === "studySelect" && <StudyModeSelect dueCount={statsData.dueCount} backLabel={studyReturnView==="home"?"返回首页":"返回知识卡片"} onSelect={mode=>void startStudy(mode)} onClose={()=>setView(studyReturnView)}/>}
+        {view === "study" && <Study mode={studyMode} card={activeCard} model={activeModel} revealed={revealed} setRevealed={setRevealed} rate={rate} current={Math.min(studyIndex+1,studyQueue.length)} total={studyQueue.length} notice={notice} onExit={() => setView(studyReturnView)} />}
         {view === "stats" && <Stats stats={statsData} />}
         {view === "diary" && <Diary />}
         {view === "settings" && <Settings configs={modelConfigs} setConfigs={setModelConfigs} />}
@@ -229,7 +231,7 @@ function TagPicker({selected,onChange}:{selected:string[];onChange:(tags:string[
   return <section className="tag-editor"><div className="tag-editor-heading"><div><small>卡片标签</small><strong>知识树标签与属性标签统一选择</strong></div><span>已选 {selected.length} 个</span></div><div className="selected-tags">{selected.map(tag=><button key={tag} onClick={()=>onChange(selected.filter(name=>name!==tag))}>#{tag} ×</button>)}</div><div className="tag-search"><input value={query} onChange={event=>setQuery(event.target.value)} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();void create()}}} placeholder="搜索知识节点或属性标签…"/>{normalized&&!exact&&<button disabled={busy} onClick={()=>void create()}>{busy?"创建中…":`+ 新建属性标签“${query.trim()}”`}</button>}</div>{normalized&&<div className="tag-results">{matches.map(tag=><button key={tag.id} onClick={()=>add(tag.name)}><small>{tag.type==="knowledge"?"知识":"属性"}</small> #{tag.name}</button>)}{exact&&selected.some(name=>name.toLocaleLowerCase()===normalized)&&<small>该标签已添加，不能重复。</small>}</div>}{tagError&&<p className="tag-error">{tagError}</p>}</section>
 }
 
-function StudyModeSelect({dueCount,onSelect,onClose}:{dueCount:number;onSelect:(mode:StudyMode)=>void;onClose:()=>void}){return <div className="study-mode-page"><button className="study-mode-back" onClick={onClose}>← 返回知识卡片</button><div className="study-mode-heading"><span className="eyebrow">今日复习 · {dueCount} 张到期</span><h1>选择学习方式</h1><p>同一批到期卡片，可以训练解题思路，也可以直接检验答案。</p></div><div className="study-mode-grid"><button onClick={()=>onSelect("quick")}><i>↯</i><strong>思路速刷</strong><p>不选择答案，只判断解题思路是否顺畅。选择后立即查看答案与解析。</p><span>通畅 · 阻塞 · 毫无思路 <b>开始 →</b></span></button><button onClick={()=>onSelect("question")}><i>✓</i><strong>做题模式</strong><p>直接选择题目答案，系统会标记对错，并展示正确答案与解析。</p><span>选择答案 · 即时反馈 <b>开始 →</b></span></button></div></div>}
+function StudyModeSelect({dueCount,backLabel,onSelect,onClose}:{dueCount:number;backLabel:string;onSelect:(mode:StudyMode)=>void;onClose:()=>void}){return <div className="study-mode-page"><button className="study-mode-back" onClick={onClose}>← {backLabel}</button><div className="study-mode-heading"><span className="eyebrow">今日复习 · {dueCount} 张到期</span><h1>选择学习方式</h1><p>同一批到期卡片，可以训练解题思路，也可以直接检验答案。</p></div><div className="study-mode-grid"><button onClick={()=>onSelect("quick")}><i>↯</i><strong>思路速刷</strong><p>不选择答案，只判断解题思路是否顺畅。选择后立即查看答案与解析。</p><span>通畅 · 阻塞 · 毫无思路 <b>开始 →</b></span></button><button onClick={()=>onSelect("question")}><i>✓</i><strong>做题模式</strong><p>直接选择题目答案，系统会标记对错，并展示正确答案与解析。</p><span>选择答案 · 即时反馈 <b>开始 →</b></span></button></div></div>}
 
 function Study({mode,card,model,revealed,setRevealed,rate,current,total,notice,onExit}:{mode:StudyMode;card?:Card;model?:ModelChoice;revealed:boolean;setRevealed:(v:boolean)=>void;rate:(r:Rating)=>void;current:number;total:number;notice:string;onExit:()=>void}){
   const [rating,setRating]=useState<Rating|null>(null);const [selectedOption,setSelectedOption]=useState<number|null>(null);const [recallScore,setRecallScore]=useState<RecallScore|null>(null);const question=card?splitCardFront(card):null;
