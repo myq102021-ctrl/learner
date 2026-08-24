@@ -1,0 +1,19 @@
+.diary-type-switch{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.diary-type-switch button{min-height:72px;border:1px solid #9da6ba;border-radius:4px;background:#eef0f6;color:#555d76;padding:13px 15px;text-align:left;display:grid;gap:5px}
+.diary-type-switch button b{font-size:13px}.diary-type-switch button span{font-size:9px;color:#7b8398}
+.diary-type-switch button.active{border:2px solid #6d5dc5;background:linear-gradient(135deg,#e5e7f4,#e9e4f6);color:#50478e}
+.diary-task-editor{border:1px solid #9aa3b8;border-radius:4px;background:#eef0f6;padding:16px;display:grid;gap:13px}
+.diary-task-editor>header{display:flex;justify-content:space-between;align-items:center;gap:12px}.diary-task-editor>header>div{display:grid;gap:3px}
+.diary-task-editor>header strong{font-size:13px}.diary-task-editor>header span{font-size:9px;color:#747d93}
+.diary-task-editor>header button{border:1px solid #9188c1;border-radius:3px;background:#e4e1f4;color:#5b50a3;padding:8px 11px;font-size:10px}
+.diary-task-list{display:grid;gap:8px}.diary-task-row{display:grid;grid-template-columns:22px minmax(0,1fr) 32px;align-items:center;gap:8px}
+.diary-task-row>input[type="checkbox"]{width:17px;height:17px;accent-color:#6c5dc4}
+.diary-task-row>input[type="text"],.diary-task-row>input:not([type]){width:100%;border:1px solid #a4acbf;border-radius:3px;background:#fff;padding:11px;color:#424960}
+.diary-task-row>button{height:34px;border:1px solid #c3a39f;border-radius:3px;background:#f2e6e4;color:#92564d}
+.diary-preview-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.diary-preview-heading h3{margin-right:auto}
+.diary-preview-heading span{border:1px solid #a6adc0;border-radius:3px;background:#ececf5;color:#5e559d;padding:4px 7px;font-size:8px;white-space:nowrap}
+.diary-preview-card>progress,.diary-task-progress{width:100%;height:6px;accent-color:#6b5dc1}
+.diary-detail-meta{display:flex;justify-content:space-between;align-items:center;gap:12px}.diary-detail-meta>b{border:1px solid #9ba4ba;border-radius:3px;background:#e7e6f3;color:#5b519e;padding:5px 8px;font-size:9px}
+.diary-task-progress{margin:0 0 20px}
+@media(max-width:640px){.diary-type-switch{grid-template-columns:1fr}.diary-task-editor>header{align-items:flex-start}.diary-task-row{grid-template-columns:20px minmax(0,1fr) 30px}}
+

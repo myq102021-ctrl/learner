@@ -7,6 +7,7 @@ import "./pipeline.css";
 import "./math.css";
 import "./theme.css";
 import "./diary-theme.css";
+import "./diary-tasks.css";
 import "./responsive.css";
 import "./knowledge-tree.css";
 

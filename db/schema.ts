@@ -62,5 +62,5 @@ export const modelConfigs = sqliteTable("model_configs", {
 }, t => [index("idx_model_configs_user").on(t.userId),index("idx_model_configs_user_default").on(t.userId,t.isDefault)]);
 
 export const learningDiaries = sqliteTable("learning_diaries", {
-  id:text("id").primaryKey(), userId:text("user_id").notNull().references(()=>users.id), entryDate:text("entry_date").notNull(), title:text("title").notNull(), content:text("content").notNull(), ...timestamps,
+  id:text("id").primaryKey(), userId:text("user_id").notNull().references(()=>users.id), entryDate:text("entry_date").notNull(), title:text("title").notNull(), content:text("content").notNull(), entryType:text("entry_type",{enum:["feeling","task"]}).notNull().default("feeling"), ...timestamps,
 }, t => [index("idx_diaries_user_date").on(t.userId,t.entryDate),index("idx_diaries_user_created").on(t.userId,t.createdAt)]);
