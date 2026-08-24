@@ -42,7 +42,7 @@ export async function POST(request:Request){
       created.push({id:card.id,type:cardType==="memorization"?"背诵":"原题",front:card.front,back:card.back,personalNote:"",path:"AI 解析 / 待归类",tags:uniqueNames.map(([,name])=>name),interval:"新卡片",tone:"orange",createdAt:now,lastReviewAt:null,nextReviewAt:null,memoryStatus:"new",sourceUrl:sourceAssetId?`/api/assets/${sourceAssetId}`:null,detail});
     }
     const result={cards:created};await db.update(cardGenerationBatches).set({status:"completed",responseJson:JSON.stringify(result),updatedAt:new Date()}).where(eq(cardGenerationBatches.id,batchId));return Response.json(result,{status:201});
-  }catch(error){if(db&&batchId)await db.delete(cardGenerationBatches).where(and(eq(cardGenerationBatches.id,batchId),eq(cardGenerationBatches.status,"pending"))).catch(()=>{});return Response.json({error:error instanceof Error?error.message:"保存卡片失败"},{status:500})}
+  }catch{if(db&&batchId)await db.delete(cardGenerationBatches).where(and(eq(cardGenerationBatches.id,batchId),eq(cardGenerationBatches.status,"pending"))).catch(()=>{});return Response.json({error:"保存卡片失败，请稍后重试"},{status:500})}
 }
 
 export async function PATCH(request:Request){
@@ -54,7 +54,7 @@ export async function PATCH(request:Request){
     await db.update(learningCards).set({front,back,explanation:JSON.stringify(detail),personalNote:personalNote||null,updatedAt:now}).where(and(eq(learningCards.id,id),eq(learningCards.userId,uid)));await db.delete(learningCardTags).where(eq(learningCardTags.learningCardId,id));
     const uniqueNames=[...new Map((Array.isArray(body.tags)?body.tags:[]).map((raw:unknown)=>{const name=String(raw).trim().replace(/\s+/g," ");return [normalize(name),name]}).filter(([key])=>key)).entries()];for(const [normalizedName,name] of uniqueNames){let [tag]=await db.select({id:tags.id,name:tags.name}).from(tags).where(and(eq(tags.userId,uid),eq(tags.normalizedName,normalizedName))).limit(1);if(!tag){const tagId=crypto.randomUUID();await db.insert(tags).values({id:tagId,userId:uid,name,normalizedName,createdAt:now,updatedAt:now}).onConflictDoNothing();[tag]=await db.select({id:tags.id,name:tags.name}).from(tags).where(and(eq(tags.userId,uid),eq(tags.normalizedName,normalizedName))).limit(1)}if(tag)await db.insert(learningCardTags).values({learningCardId:id,tagId:tag.id}).onConflictDoNothing()}
     return Response.json({card:{id,type:stored.cardType==="question"?"原题":stored.cardType==="memorization"?"背诵":"知识点",front,back,personalNote,path:"AI 解析 / 待归类",tags:uniqueNames.map(([,name])=>name),sourceUrl:stored.sourceAssetId?`/api/assets/${stored.sourceAssetId}`:null,detail,updatedAt:now}});
-  }catch(error){return Response.json({error:error instanceof Error?error.message:"更新卡片失败"},{status:500})}
+  }catch{return Response.json({error:"更新卡片失败，请稍后重试"},{status:500})}
 }
 
 export async function DELETE(request:Request){
