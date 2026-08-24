@@ -50,12 +50,12 @@ function splitCardFront(card:Card){
 function CardQuestionPreview({card}:{card:Card}){const {stem,options,compact}=splitCardFront(card);return <div className="card-question-preview"><h3><MathText>{stem}</MathText></h3>{options.length>0&&<div className={`card-preview-options ${compact?"compact":"stacked"}`}>{options.map((option,index)=><span key={`${option}-${index}`}><MathText>{option}</MathText></span>)}</div>}</div>}
 
 const nav = [
-  ["home", "首页", "◈"], ["upload", "上传知识内容", "↑"], ["cards", "知识卡片", "▱"], ["knowledgeTree", "知识树", "⌘"], ["stats", "学习统计", "⌑"], ["diary", "悟道日记", "▦"], ["settings", "设置", "⚙"],
+  ["home", "首页", "⌂"], ["upload", "上传知识内容", "⇧"], ["cards", "知识卡片", "▤"], ["knowledgeTree", "知识树", "🌱"], ["stats", "学习统计", "⌁"], ["diary", "悟道日记", "▣"], ["settings", "设置", "⚙"],
 ] as const;
 
 export default function Home() {
   const [view, setView] = useState<View>("home");
-  const [sidebarCollapsed,setSidebarCollapsed]=useState(false);
+  const [sidebarCollapsed,setSidebarCollapsed]=useState(true);
   const [studyIndex, setStudyIndex] = useState(0);
   const [studyQueue,setStudyQueue]=useState<Array<string|number>>([]);
   const [studyMode,setStudyMode]=useState<StudyMode>("quick");
@@ -81,7 +81,7 @@ export default function Home() {
   useEffect(()=>{let cancelled=false;const valid=modelConfigs.filter(config=>config.enabled&&config.validationStatus==="valid");if(!valid.length){setModelChoices([]);return}Promise.all(valid.map(async config=>{try{const response=await fetch("/api/models/discover",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({configId:config.id})});const data=await response.json();if(!response.ok)throw new Error(data.error);const ids=[...new Set<string>((data.models||[]).map((item:GoogleModel)=>item.id).filter(Boolean))];return (ids.length?ids:[config.model]).map(model=>({...config,model,choiceId:`${config.id}::${model}`}))}catch{return [{...config,choiceId:`${config.id}::${config.model}`}]}})).then(groups=>{if(!cancelled)setModelChoices(groups.flat())});return()=>{cancelled=true}},[modelConfigs]);
   useEffect(()=>{let cancelled=false;fetch("/api/cards").then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.error||"读取卡片失败");if(!cancelled){setGeneratedCards(data.cards||[]);setLibraryTags(data.tags||[])}}).catch(()=>{});return()=>{cancelled=true}},[]);
   useEffect(()=>{let cancelled=false;fetch("/api/stats").then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.error||"读取统计失败");if(!cancelled)setStatsData(data)}).catch(()=>{});return()=>{cancelled=true}},[]);
-  useEffect(()=>{setSidebarCollapsed(window.localStorage.getItem("learner-sidebar-collapsed")==="1")},[]);
+  useEffect(()=>{setSidebarCollapsed(window.localStorage.getItem("learner-sidebar-collapsed")!=="0")},[]);
   function toggleSidebar(){setSidebarCollapsed(current=>{const next=!current;window.localStorage.setItem("learner-sidebar-collapsed",next?"1":"0");return next})}
   function openStudy(from:View){setStudyReturnView(from);setView("studySelect")}
 
@@ -95,7 +95,7 @@ export default function Home() {
     <main className="app-shell">
       <aside className={`sidebar ${sidebarCollapsed?"collapsed":""}`}>
         <div className="brand-row"><button className="brand" onClick={() => setView("home")}><span className="brand-mark">悟</span><span>悟道</span></button><button className="sidebar-toggle" onClick={toggleSidebar} aria-label={sidebarCollapsed?"展开菜单栏":"收起菜单栏"} title={sidebarCollapsed?"展开菜单栏":"收起菜单栏"}>{sidebarCollapsed?"›":"‹"}</button></div>
-        <nav>{nav.map(([id, label, icon]) => <button key={id} className={view === id||(view==="cardDetail"&&cardReturnView===id) ? "active" : ""} onClick={() => setView(id as View)}><i>{icon}</i>{label}{id === "cards" && <b>{allCards.length}</b>}</button>)}</nav>
+        <nav>{nav.map(([id, label, icon]) => <button key={id} title={label} aria-label={label} data-label={label} className={view === id||(view==="cardDetail"&&cardReturnView===id) ? "active" : ""} onClick={() => setView(id as View)}><i>{icon}</i><span>{label}</span>{id === "cards" && <b>{allCards.length}</b>}</button>)}</nav>
         <div className="sidebar-card"><span>连续学习</span><strong>{statsData.streak} <small>天</small></strong><div className="week">{statsData.trend.slice(-7).map(item=><i className={item.count?"done":""} key={item.date}>{item.count?"✓":item.label.split("/")[1]}</i>)}</div></div>
         <button className="profile"><span>林</span><span>林晓宇<small>学习设置</small></span><i>···</i></button>
       </aside>
