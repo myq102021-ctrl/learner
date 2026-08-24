@@ -15,7 +15,7 @@ export const directories = sqliteTable("directories", {
 
 export const tags = sqliteTable("tags", {
   id:text("id").primaryKey(), userId:text("user_id").notNull().references(()=>users.id), name:text("name").notNull(), normalizedName:text("normalized_name").notNull().default(""), type:text("type",{enum:["knowledge","attribute"]}).notNull().default("attribute"), parentId:text("parent_id"), description:text("description"), sortOrder:integer("sort_order").notNull().default(0), ...timestamps,
-}, t => [uniqueIndex("idx_tags_user_normalized_name").on(t.userId,t.normalizedName),index("idx_tags_user_type_parent").on(t.userId,t.type,t.parentId,t.sortOrder)]);
+}, t => [uniqueIndex("idx_tags_user_scope_name").on(t.userId,t.type,t.parentId,t.normalizedName),index("idx_tags_user_type_parent").on(t.userId,t.type,t.parentId,t.sortOrder)]);
 
 export const sourceAssets = sqliteTable("source_assets", {
   id:text("id").primaryKey(), userId:text("user_id").notNull().references(()=>users.id), storageKey:text("storage_key").notNull(), originalName:text("original_name").notNull(), mimeType:text("mime_type").notNull(), size:integer("size").notNull(), width:integer("width"), height:integer("height"), checksum:text("checksum"), status:text("status",{enum:["uploading","ready","failed"]}).notNull(), ...timestamps,
