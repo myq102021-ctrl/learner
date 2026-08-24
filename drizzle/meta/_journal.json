@@ -57,6 +57,13 @@
       "when": 1787301681961,
       "tag": "0007_empty_sauron",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1787564220770,
+      "tag": "0008_stiff_jack_murdock",
+      "breakpoints": true
     }
   ]
 }
